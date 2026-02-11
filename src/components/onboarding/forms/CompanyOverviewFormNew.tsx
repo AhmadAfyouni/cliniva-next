@@ -1,66 +1,107 @@
-'use client';
+"use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { ChevronLeft, ChevronDown, ChevronUp, Upload, Calendar, Building, FileText, User, Hash, Target, Eye } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card } from "@/components/ui/card"
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  ChevronLeft,
+  ChevronDown,
+  ChevronUp,
+  Upload,
+  Calendar,
+  Building,
+  FileText,
+  User,
+  Hash,
+  Target,
+  Eye,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { toast } from 'sonner';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { toast } from "sonner";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 // Real-time validation will be added later
-import { stepApi } from '@/api/validationApi';
-import { useUniqueValidation, getValidationStatusClass, getValidationMessage } from '@/hooks/useUniqueValidation';
-import { apiHelpers } from '@/lib/axios';
-import { useSession } from 'next-auth/react';
-import { FormFieldWithIcon } from '@/components/ui/form-field-with-icon';
-import { ValidationMessage } from '@/components/ui/validation-message';
+import { stepApi } from "@/api/validationApi";
+import {
+  useUniqueValidation,
+  getValidationStatusClass,
+  getValidationMessage,
+} from "@/hooks/useUniqueValidation";
+import { apiHelpers } from "@/lib/axios";
+import { useSession } from "next-auth/react";
+import { FormFieldWithIcon } from "@/components/ui/form-field-with-icon";
+import { ValidationMessage } from "@/components/ui/validation-message";
+import FieldInput from "@/components/global/FieldInput";
+import { useParams } from "next/navigation";
+import FieldTextarea from "@/components/global/FieldTextarea";
 
 // Form validation schema based on backend CreateOrganizationDto
 const companyOverviewSchema = z.object({
-  name: z.string()
-    .min(2, 'Company name must be at least 2 characters')
-    .max(100, 'Company name must be less than 100 characters')
+  name: z
+    .string()
+    .min(2, "Company name must be at least 2 characters")
+    .max(100, "Company name must be less than 100 characters")
     .trim(),
-  legalName: z.string()
-    .max(100, 'Legal name must be less than 100 characters')
+  legalName: z
+    .string()
+    .max(100, "Legal name must be less than 100 characters")
     .trim()
     .optional()
-    .or(z.literal('')),
-  registrationNumber: z.string()
-    .max(50, 'Registration number must be less than 50 characters')
+    .or(z.literal("")),
+  registrationNumber: z
+    .string()
+    .max(50, "Registration number must be less than 50 characters")
     .trim()
     .optional()
-    .or(z.literal('')),
-  yearEstablished: z.number()
-    .min(1800, 'Year must be after 1800')
-    .max(new Date().getFullYear(), 'Year cannot be in the future')
+    .or(z.literal("")),
+  yearEstablished: z
+    .number()
+    .min(1800, "Year must be after 1800")
+    .max(new Date().getFullYear(), "Year cannot be in the future")
     .optional(),
-  logoUrl: z.string()
+  logoUrl: z
+    .string()
     .optional()
-    .refine((val) => !val || val === '' || z.string().url().safeParse(val).success, {
-      message: 'Please provide a valid logo URL'
-    }),
-  ceoName: z.string()
-    .max(50, 'CEO name must be less than 50 characters')
+    .refine(
+      (val) => !val || val === "" || z.string().url().safeParse(val).success,
+      {
+        message: "Please provide a valid logo URL",
+      },
+    ),
+  ceoName: z
+    .string()
+    .max(50, "CEO name must be less than 50 characters")
     .trim()
     .optional()
-    .or(z.literal('')),
-  mission: z.string()
-    .max(500, 'Mission statement must be less than 500 characters')
+    .or(z.literal("")),
+  mission: z
+    .string()
+    .max(500, "Mission statement must be less than 500 characters")
     .trim()
     .optional()
-    .or(z.literal('')),
-  vision: z.string()
-    .max(500, 'Vision statement must be less than 500 characters')
+    .or(z.literal("")),
+  vision: z
+    .string()
+    .max(500, "Vision statement must be less than 500 characters")
     .trim()
     .optional()
-    .or(z.literal('')),
+    .or(z.literal("")),
 });
 
 type CompanyOverviewFormData = z.infer<typeof companyOverviewSchema>;
@@ -78,7 +119,7 @@ export const CompanyOverviewFormNew: React.FC<CompanyOverviewFormProps> = ({
   onPrevious,
   initialData,
   currentStep = 1,
-  currentSubStep = 'overview'
+  currentSubStep = "overview",
 }) => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -87,44 +128,54 @@ export const CompanyOverviewFormNew: React.FC<CompanyOverviewFormProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
 
+  const params = useParams();
+  const locale = params.locale as string;
+  const isRTL = locale === "ar";
+
   const form = useForm<CompanyOverviewFormData>({
     resolver: zodResolver(companyOverviewSchema),
     defaultValues: {
-      name: initialData?.name || '',
-      legalName: initialData?.legalName || '',
-      registrationNumber: initialData?.registrationNumber || '',
+      name: initialData?.name || "",
+      legalName: initialData?.legalName || "",
+      registrationNumber: initialData?.registrationNumber || "",
       yearEstablished: initialData?.yearEstablished, // Keep as number or undefined
-      logoUrl: initialData?.logoUrl || '',
-      ceoName: initialData?.ceoName || '',
-      mission: initialData?.mission || '',
-      vision: initialData?.vision || '',
+      logoUrl: initialData?.logoUrl || "",
+      ceoName: initialData?.ceoName || "",
+      mission: initialData?.mission || "",
+      vision: initialData?.vision || "",
     },
   });
 
   // Fetch current organization data when component mounts if user has an organization
   useEffect(() => {
     const fetchOrganizationData = async () => {
-      if (session?.user?.organizationId && (!initialData || Object.keys(initialData).length === 0)) {
+      if (
+        session?.user?.organizationId &&
+        (!initialData || Object.keys(initialData).length === 0)
+      ) {
         setIsLoadingOrgData(true);
         try {
           const response = await apiHelpers.getCurrentOrganization();
           if (response.success && response.data) {
             const orgData = response.data;
-            
+
             // Update form with organization data
-            form.setValue('name', orgData.name || '');
-            form.setValue('legalName', orgData.legalName || '');
-            form.setValue('registrationNumber', orgData.registrationNumber || '');
-            form.setValue('yearEstablished', orgData.yearEstablished);
-            form.setValue('logoUrl', orgData.logoUrl || ''); // This will now have the correct URL
-            form.setValue('ceoName', orgData.ceoName || '');
-            form.setValue('mission', orgData.mission || '');
-            form.setValue('vision', orgData.vision || '');
-            
-            console.log('✅ Loaded organization data:', orgData);
+            form.setValue("name", orgData.name || "");
+            form.setValue("legalName", orgData.legalName || "");
+            form.setValue(
+              "registrationNumber",
+              orgData.registrationNumber || "",
+            );
+            form.setValue("yearEstablished", orgData.yearEstablished);
+            form.setValue("logoUrl", orgData.logoUrl || ""); // This will now have the correct URL
+            form.setValue("ceoName", orgData.ceoName || "");
+            form.setValue("mission", orgData.mission || "");
+            form.setValue("vision", orgData.vision || "");
+
+            console.log("✅ Loaded organization data:", orgData);
           }
         } catch (error) {
-          console.error('Failed to fetch organization data:', error);
+          console.error("Failed to fetch organization data:", error);
           // Don't show error toast, just log it as this is optional enhancement
         } finally {
           setIsLoadingOrgData(false);
@@ -138,7 +189,7 @@ export const CompanyOverviewFormNew: React.FC<CompanyOverviewFormProps> = ({
   // Update form when initialData changes (when user returns from other forms)
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
-      Object.keys(initialData).forEach(key => {
+      Object.keys(initialData).forEach((key) => {
         const value = initialData[key as keyof typeof initialData];
         if (value !== undefined && value !== null) {
           form.setValue(key as keyof CompanyOverviewFormData, value);
@@ -148,34 +199,39 @@ export const CompanyOverviewFormNew: React.FC<CompanyOverviewFormProps> = ({
   }, [initialData, form]);
 
   // Real-time validation for company name uniqueness
-  const currentName = form.watch('name') || '';
+  const currentName = form.watch("name") || "";
   const isEditingExistingName = Boolean(
-    initialData?.name && 
-    initialData.name.trim().length > 0 && 
-    currentName.trim().toLowerCase() === initialData.name.trim().toLowerCase()
+    initialData?.name &&
+    initialData.name.trim().length > 0 &&
+    currentName.trim().toLowerCase() === initialData.name.trim().toLowerCase(),
   );
-  
+
   const companyNameValidation = useUniqueValidation(
     currentName,
-    'organizationName',
+    "organizationName",
     800, // 800ms debounce delay
     undefined,
-    isEditingExistingName // Skip validation if editing existing organization name
+    isEditingExistingName, // Skip validation if editing existing organization name
   );
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
 
     // Validate file type
-    const allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/gif'];
+    const allowedTypes = [
+      "image/svg+xml",
+      "image/png",
+      "image/jpeg",
+      "image/gif",
+    ];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Please upload an SVG, PNG, JPG or GIF file');
+      toast.error("Please upload an SVG, PNG, JPG or GIF file");
       return;
     }
 
     // Validate file size (2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('File size must be less than 2MB');
+      toast.error("File size must be less than 2MB");
       return;
     }
 
@@ -184,10 +240,10 @@ export const CompanyOverviewFormNew: React.FC<CompanyOverviewFormProps> = ({
       // For now, create a blob URL for preview
       // TODO: Upload to server and get proper URL
       const imageUrl = URL.createObjectURL(file);
-      form.setValue('logoUrl', imageUrl);
-      toast.success('Logo uploaded successfully');
+      form.setValue("logoUrl", imageUrl);
+      toast.success("Logo uploaded successfully");
     } catch (error) {
-      toast.error('Failed to upload logo');
+      toast.error("Failed to upload logo");
     } finally {
       setIsUploading(false);
     }
@@ -199,105 +255,130 @@ export const CompanyOverviewFormNew: React.FC<CompanyOverviewFormProps> = ({
 
   const onSubmit = async (data: CompanyOverviewFormData) => {
     if (isSubmitting) return;
-    
+
     try {
       setIsSubmitting(true);
-      
+
       // Validate and clean the data
       const cleanedData = Object.fromEntries(
         Object.entries(data).filter(([_, value]) => {
-          if (typeof value === 'string') {
-            return value.trim() !== '';
+          if (typeof value === "string") {
+            return value.trim() !== "";
           }
           return value !== undefined && value !== null;
-        })
+        }),
       ) as CompanyOverviewFormData;
 
       // Ensure required fields are present
-      if (!cleanedData.name || cleanedData.name.trim() === '') {
-        toast.error('Company name is required');
+      if (!cleanedData.name || cleanedData.name.trim() === "") {
+        toast.error("Company name is required");
         setIsSubmitting(false);
         return;
       }
 
       // Check unique validation before submitting
-      if (companyNameValidation.hasChecked && (!companyNameValidation.isValid || !companyNameValidation.isAvailable)) {
-        toast.error('Please fix the company name issue before continuing');
+      if (
+        companyNameValidation.hasChecked &&
+        (!companyNameValidation.isValid || !companyNameValidation.isAvailable)
+      ) {
+        toast.error("Please fix the company name issue before continuing");
         setIsSubmitting(false);
         return;
       }
 
       // If validation is still in progress, wait for it
       if (companyNameValidation.isChecking) {
-        toast.info('Please wait for name validation to complete');
+        toast.info("Please wait for name validation to complete");
         setIsSubmitting(false);
         return;
       }
 
-      console.log('Submitting company overview data:', cleanedData);
-      
+      console.log("Submitting company overview data:", cleanedData);
+
       // Try backend validation first
       try {
-        const validationResult = await stepApi.saveOrganizationOverview(cleanedData);
+        const validationResult =
+          await stepApi.saveOrganizationOverview(cleanedData);
         if (validationResult.success && validationResult.canProceed) {
           onNext(cleanedData);
-          toast.success(validationResult.message || 'Company overview saved successfully');
+          toast.success(
+            validationResult.message || "Company overview saved successfully",
+          );
           return;
         } else if (!validationResult.success) {
           // Handle specific validation errors from backend
-          toast.error(validationResult.message || 'Company overview validation failed');
+          toast.error(
+            validationResult.message || "Company overview validation failed",
+          );
           setIsSubmitting(false);
           return;
         }
       } catch (error: any) {
-        console.error('Backend validation error:', error);
-        
+        console.error("Backend validation error:", error);
+
         // Handle specific backend validation errors
         if (error.response?.status === 400) {
-          const errorMessage = error.response.data?.message || error.message || 'Invalid data provided';
-          
+          const errorMessage =
+            error.response.data?.message ||
+            error.message ||
+            "Invalid data provided";
+
           // Handle specific validation error cases
-          if (errorMessage.includes('already owns an organization')) {
-            toast.error('You already own a company. Each user can only own one organization.');
-          } else if (errorMessage.includes('Subscription is not active')) {
-            toast.error('Your subscription is not active. Please contact support or update your subscription.');
-          } else if (errorMessage.includes('company plan')) {
-            toast.error('Company registration requires a company plan subscription. Please upgrade your plan.');
-          } else if (errorMessage.includes('User not found')) {
-            toast.error('Authentication error. Please log out and log in again.');
-          } else if (errorMessage.includes('Invalid Commercial Registration')) {
-            toast.error('Commercial Registration number must be exactly 10 digits.');
-          } else if (errorMessage.includes('Invalid VAT')) {
-            toast.error('VAT number format is invalid. Please enter a valid VAT number.');
-          } else if (errorMessage.includes('Invalid email')) {
-            toast.error('Please enter a valid email address.');
-          } else if (errorMessage.includes('required')) {
-            toast.error('Please fill in all required fields.');
+          if (errorMessage.includes("already owns an organization")) {
+            toast.error(
+              "You already own a company. Each user can only own one organization.",
+            );
+          } else if (errorMessage.includes("Subscription is not active")) {
+            toast.error(
+              "Your subscription is not active. Please contact support or update your subscription.",
+            );
+          } else if (errorMessage.includes("company plan")) {
+            toast.error(
+              "Company registration requires a company plan subscription. Please upgrade your plan.",
+            );
+          } else if (errorMessage.includes("User not found")) {
+            toast.error(
+              "Authentication error. Please log out and log in again.",
+            );
+          } else if (errorMessage.includes("Invalid Commercial Registration")) {
+            toast.error(
+              "Commercial Registration number must be exactly 10 digits.",
+            );
+          } else if (errorMessage.includes("Invalid VAT")) {
+            toast.error(
+              "VAT number format is invalid. Please enter a valid VAT number.",
+            );
+          } else if (errorMessage.includes("Invalid email")) {
+            toast.error("Please enter a valid email address.");
+          } else if (errorMessage.includes("required")) {
+            toast.error("Please fill in all required fields.");
           } else {
             toast.error(`Validation Error: ${errorMessage}`);
           }
         } else if (error.response?.status === 401) {
-          toast.error('Authentication required. Please log in again.');
+          toast.error("Authentication required. Please log in again.");
         } else if (error.response?.status >= 500) {
-          toast.error('Server error. Please try again in a few minutes.');
+          toast.error("Server error. Please try again in a few minutes.");
         } else {
           // For network errors, fall back to local mode
-          console.warn('Backend API not available, continuing with form flow:', error);
+          console.warn(
+            "Backend API not available, continuing with form flow:",
+            error,
+          );
           onNext(cleanedData);
-          toast.success('Company overview data saved locally');
+          toast.success("Company overview data saved locally");
         }
-        
+
         setIsSubmitting(false);
         return;
       }
 
       // Fallback: proceed locally if backend is unavailable
       onNext(cleanedData);
-      toast.success('Company overview data saved locally');
-      
+      toast.success("Company overview data saved locally");
     } catch (error: any) {
-      console.error('Form submission error:', error);
-      toast.error('An unexpected error occurred. Please try again.');
+      console.error("Form submission error:", error);
+      toast.error("An unexpected error occurred. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -324,141 +405,126 @@ export const CompanyOverviewFormNew: React.FC<CompanyOverviewFormProps> = ({
 
         {/* Form */}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-8">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="w-full space-y-8"
+          >
             {/* Logo and Company Name Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div>
-                <label className="block text-sm font-bold text-primary font-lato">
-                  Logo<span className="text-red-500 ml-1">*</span>
-                </label>
-                <FormField
-                  control={form.control}
-                  name="logoUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <div
-                          className="border-2 border-dashed border-border-light bg-surface-tertiary rounded-lg p-8 text-center cursor-pointer hover:bg-surface-hover transition-colors"
-                          onClick={triggerFileUpload}
-                        >
-                          {field.value ? (
-                            <div className="flex flex-col items-center">
-                              <img src={field.value} alt="Logo" className="w-12 h-12 object-contain mb-2 rounded" />
-                              <p className="text-sm text-primary-500">
-                                Logo uploaded successfully
-                              </p>
-                            </div>
-                          ) : (
-                            <>
-                              <Upload className="w-6 h-6 mx-auto mb-2 text-text-secondary" />
-                              <p className="text-sm mb-1 text-primary-500">
-                                {isUploading ? 'Uploading...' : 'Click or Drag file to this area to upload'}
-                              </p>
-                              <p className="text-xs text-text-secondary">
-                                SVG, PNG, JPG or GIF , Maximum file size 2MB.
-                              </p>
-                            </>
-                          )}
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/svg+xml,image/png,image/jpeg,image/gif"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleFileUpload(file);
-                            }}
-                            className="hidden"
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
               <div className="space-y-6">
-                {/* Company Name Field */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-primary font-lato">
-                    Company Name<span className="text-red-500 ml-1">*</span>
+                <div
+                  className={[
+                    "flex items-center gap-6",
+                    isRTL ? "flex-row-reverse" : "flex-row",
+                  ].join(" ")}
+                >
+                  <label
+                    className={[
+                      "text-sm font-lato text-primary font-normal leading-relaxed w-52",
+                      isRTL ? "text-right" : "text-left",
+                    ].join(" ")}
+                  >
+                    Logo<span className="text-red-500 ml-1">*</span>
                   </label>
+
                   <FormField
                     control={form.control}
-                    name="name"
+                    name="logoUrl"
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                              <Building className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                            </div>
-                            <Input
-                              {...field}
-                              placeholder="Enter Trade Name"
-                              className={`h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground ${getValidationStatusClass(companyNameValidation)}`}
-                              style={{
-                                boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                borderRadius: '8px'
+                          <div>
+                            {/* hidden input */}
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/svg+xml,image/png,image/jpeg,image/gif"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFileUpload(file); // your existing upload logic
                               }}
+                              className="hidden"
                             />
+
+                            {/* circle button */}
+                            <button
+                              type="button"
+                              onClick={triggerFileUpload}
+                              className={[
+                                "relative inline-flex items-center justify-center overflow-hidden",
+                                "border border-border bg-background",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                              ].join(" ")}
+                              style={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: 9999,
+                                boxShadow:
+                                  "0px 0px 1px 1px rgba(21, 197, 206, 0.16)",
+                              }}
+                              aria-label="Upload logo"
+                            >
+                              {field.value ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={field.value}
+                                  alt="Logo"
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Upload className="h-5 w-5 text-muted-foreground" />
+                              )}
+
+                              {/* optional uploading overlay */}
+                              {isUploading && (
+                                <span className="absolute inset-0 bg-background/60 flex items-center justify-center text-xs text-primary">
+                                  Uploading…
+                                </span>
+                              )}
+                            </button>
                           </div>
                         </FormControl>
+
                         <FormMessage />
-                        <ValidationMessage validation={companyNameValidation} />
                       </FormItem>
                     )}
                   />
                 </div>
+                {/* Year of Establishment */}
+                <FieldInput
+                  control={form.control}
+                  name="yearEstablished"
+                  label="Year of Establishment"
+                  placeholder="Enter Year"
+                  layout="inline"
+                  variant="flat"
+                  type="number"
+                  required
+                />
+              </div>
+              <div className="space-y-6">
+                {/* Company Name Field */}
+                <FieldInput
+                  control={form.control}
+                  name="name"
+                  label="Company Name"
+                  placeholder="Enter Trade Name"
+                  validate={true}
+                  validation={companyNameValidation}
+                  layout="inline"
+                  variant="flat"
+                  required
+                />
 
                 {/* Legal Name Field */}
-                <FormFieldWithIcon
+                <FieldInput
                   control={form.control}
                   name="legalName"
                   label="Legal Name"
                   placeholder="Enter Legal Name"
-                  icon={FileText}
-                  disabled={isSubmitting}
-                />
-              </div>
-            </div>
-
-            {/* Year of Establishment */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-primary font-lato">
-                  Year of Establishment
-                </label>
-                <FormField
-                  control={form.control}
-                  name="yearEstablished"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <div className="relative">
-                          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                            <Calendar className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                          </div>
-                          <Input
-                            type="number"
-                            value={field.value || ''}
-                            name={field.name}
-                            onBlur={field.onBlur}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              field.onChange(value ? parseInt(value) : undefined);
-                            }}
-                            placeholder="Enter Year"
-                            className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                            style={{
-                              boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                              borderRadius: '8px'
-                            }}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  layout="inline"
+                  variant="flat"
+                  required
                 />
               </div>
             </div>
@@ -466,7 +532,7 @@ export const CompanyOverviewFormNew: React.FC<CompanyOverviewFormProps> = ({
             {/* Company Overview Section */}
             <Card className="bg-background border-border shadow-sm">
               <div className="p-6">
-                <div 
+                <div
                   className="flex items-center justify-between mb-6 cursor-pointer"
                   onClick={() => setIsOverviewOpen(!isOverviewOpen)}
                 >
@@ -484,46 +550,50 @@ export const CompanyOverviewFormNew: React.FC<CompanyOverviewFormProps> = ({
                   <>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
                       {/* Mission Field */}
-                      <FormFieldWithIcon
+                      <FieldTextarea
                         control={form.control}
                         name="mission"
                         label="Mission"
                         placeholder="Enter Mission"
-                        icon={Target}
+                        aria-multiline={true}
+                        layout="inline"
+                        variant="flat"
                         disabled={isSubmitting}
-                        multiline={true}
                       />
 
                       {/* Vision Field */}
-                      <FormFieldWithIcon
+                      <FieldTextarea
                         control={form.control}
                         name="vision"
                         label="Vision"
                         placeholder="Enter Vision"
-                        icon={Eye}
+                        aria-multiline={true}
+                        layout="inline"
+                        variant="flat"
                         disabled={isSubmitting}
-                        multiline={true}
                       />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                       {/* CEO Name Field */}
-                      <FormFieldWithIcon
+                      <FieldInput
                         control={form.control}
                         name="ceoName"
                         label="CEO Name"
                         placeholder="Enter CEO Name"
-                        icon={User}
+                        layout="inline"
+                        variant="flat"
                         disabled={isSubmitting}
                       />
 
                       {/* Registration Number Field */}
-                      <FormFieldWithIcon
+                      <FieldInput
                         control={form.control}
                         name="registrationNumber"
                         label="Registration Number"
                         placeholder="Enter Registration Number"
-                        icon={Hash}
+                        layout="inline"
+                        variant="flat"
                         disabled={isSubmitting}
                       />
                     </div>
@@ -567,4 +637,4 @@ export const CompanyOverviewFormNew: React.FC<CompanyOverviewFormProps> = ({
       </div>
     </div>
   );
-}; 
+};

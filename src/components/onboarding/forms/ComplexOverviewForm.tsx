@@ -1,91 +1,130 @@
-'use client';
+"use client";
 
 import React, { useState, useRef } from "react";
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { ChevronLeft, ChevronRight, Building, User, Calendar, Target, Eye, FileText, Globe, Upload } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Building,
+  User,
+  Calendar,
+  Target,
+  Eye,
+  FileText,
+  Globe,
+  Upload,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormField, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { toast } from 'sonner';
-import { fetchDepartments } from '@/api/onboardingApiClient';
-import { ComplexOverviewDto } from '@/types/onboarding';
-import { saveComplexOverview } from '@/api/onboardingApiClient';
-import { DepartmentSearchInput, Department } from '@/components/ui/department-search-input';
-import { useUniqueValidation } from '@/hooks/useUniqueValidation';
-import { FormFieldWithIcon } from '@/components/ui/form-field-with-icon';
-import { CollapsibleCard } from '@/components/ui/collapsible-card';
-import { EnhancedLogoUpload } from '@/components/ui/enhanced-logo-upload';
-import { ValidationMessage } from '@/components/ui/validation-message';
+import {
+  Form,
+  FormField,
+  FormControl,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { toast } from "sonner";
+import { fetchDepartments } from "@/api/onboardingApiClient";
+import { ComplexOverviewDto } from "@/types/onboarding";
+import { saveComplexOverview } from "@/api/onboardingApiClient";
+import {
+  DepartmentSearchInput,
+  Department,
+} from "@/components/ui/department-search-input";
+import { useUniqueValidation } from "@/hooks/useUniqueValidation";
+import { FormFieldWithIcon } from "@/components/ui/form-field-with-icon";
+import { CollapsibleCard } from "@/components/ui/collapsible-card";
+import { EnhancedLogoUpload } from "@/components/ui/enhanced-logo-upload";
+import { ValidationMessage } from "@/components/ui/validation-message";
+import FieldInput from "@/components/global/FieldInput";
+import FieldTextarea from "@/components/global/FieldTextarea";
 
 // Form validation schema matching new flattened ComplexOverviewDto
 const complexOverviewSchema = z.object({
   // Required fields
-  name: z.string()
-    .min(2, 'Complex name must be at least 2 characters')
-    .max(100, 'Complex name must be less than 100 characters')
+  name: z
+    .string()
+    .min(2, "Complex name must be at least 2 characters")
+    .max(100, "Complex name must be less than 100 characters")
     .trim(),
-  
+
   // Optional basic info
-  managerName: z.string()
-    .max(50, 'Manager name must be less than 50 characters')
+  managerName: z
+    .string()
+    .max(50, "Manager name must be less than 50 characters")
     .trim()
     .optional()
-    .or(z.literal('')),
-  logoUrl: z.string()
+    .or(z.literal("")),
+  logoUrl: z
+    .string()
     .optional()
     .refine(
       (val) =>
         !val ||
-        val === '' ||
+        val === "" ||
         z.string().url().safeParse(val).success ||
-        val.startsWith('/uploads/'),
+        val.startsWith("/uploads/"),
       {
-        message: 'Please provide a valid logo URL'
-      }
+        message: "Please provide a valid logo URL",
+      },
     ),
-  website: z.string()
+  website: z
+    .string()
     .optional()
-    .refine((val) => !val || val === '' || z.string().url().safeParse(val).success, {
-      message: 'Please provide a valid website URL (e.g., https://example.com)'
-    }),
-    
+    .refine(
+      (val) => !val || val === "" || z.string().url().safeParse(val).success,
+      {
+        message:
+          "Please provide a valid website URL (e.g., https://example.com)",
+      },
+    ),
+
   // Flattened business profile fields (no nested businessProfile object)
-  yearEstablished: z.number()
-    .min(1800, 'Year must be after 1800')
-    .max(new Date().getFullYear(), 'Year cannot be in the future')
+  yearEstablished: z
+    .number()
+    .min(1800, "Year must be after 1800")
+    .max(new Date().getFullYear(), "Year cannot be in the future")
     .optional(),
-  mission: z.string()
-    .max(500, 'Mission statement must be less than 500 characters')
+  mission: z
+    .string()
+    .max(500, "Mission statement must be less than 500 characters")
     .optional()
-    .or(z.literal('')),
-  vision: z.string()
-    .max(500, 'Vision statement must be less than 500 characters')
+    .or(z.literal("")),
+  vision: z
+    .string()
+    .max(500, "Vision statement must be less than 500 characters")
     .optional()
-    .or(z.literal('')),
-  overview: z.string()
-    .max(1000, 'Overview must be less than 1000 characters')
+    .or(z.literal("")),
+  overview: z
+    .string()
+    .max(1000, "Overview must be less than 1000 characters")
     .optional()
-    .or(z.literal('')),
-  goals: z.string()
-    .max(1000, 'Goals must be less than 1000 characters')
+    .or(z.literal("")),
+  goals: z
+    .string()
+    .max(1000, "Goals must be less than 1000 characters")
     .optional()
-    .or(z.literal('')),
-  ceoName: z.string()
-    .max(50, 'CEO name must be less than 50 characters')
+    .or(z.literal("")),
+  ceoName: z
+    .string()
+    .max(50, "CEO name must be less than 50 characters")
     .trim()
     .optional()
-    .or(z.literal('')),
-    
+    .or(z.literal("")),
+
   // Department management - simplified to single array
-  departments: z.array(z.object({
-    _id: z.string().optional(),
-    name: z.string().min(1, 'Department name is required'),
-    description: z.string().optional()
-  }))
+  departments: z.array(
+    z.object({
+      _id: z.string().optional(),
+      name: z.string().min(1, "Department name is required"),
+      description: z.string().optional(),
+    }),
+  ),
 });
 
 type ComplexOverviewFormData = z.infer<typeof complexOverviewSchema>;
@@ -103,10 +142,11 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
   onPrevious,
   initialData = {},
   organizationData,
-  isLoading = false
+  isLoading = false,
 }) => {
   const [isBasicInfoExpanded, setIsBasicInfoExpanded] = useState(true);
-  const [isBusinessProfileExpanded, setIsBusinessProfileExpanded] = useState(false);
+  const [isBusinessProfileExpanded, setIsBusinessProfileExpanded] =
+    useState(false);
   const [isDepartmentsExpanded, setIsDepartmentsExpanded] = useState(false);
   const [useInheritance] = useState(true); // Always inherit from organization data
   const [allDepartments, setAllDepartments] = useState<Department[]>([]);
@@ -117,44 +157,53 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
   React.useEffect(() => {
     fetchDepartments()
       .then((data: any[]) => {
-        const formattedDepartments: Department[] = data.map(dept => ({
+        const formattedDepartments: Department[] = data.map((dept) => ({
           _id: dept._id || dept.id,
           name: dept.name,
-          description: dept.description
+          description: dept.description,
         }));
         setAllDepartments(formattedDepartments);
       })
-      .catch(() => toast.error('Failed to load departments'));
+      .catch(() => toast.error("Failed to load departments"));
   }, []);
 
   // Apply data inheritance from organization if available and requested
-  const getInheritedValue = (field: keyof ComplexOverviewDto, currentValue?: any) => {
-    if (!useInheritance || !organizationData || currentValue) return currentValue;
+  const getInheritedValue = (
+    field: keyof ComplexOverviewDto,
+    currentValue?: any,
+  ) => {
+    if (!useInheritance || !organizationData || currentValue)
+      return currentValue;
     return organizationData.overview?.[field];
   };
 
   const form = useForm<ComplexOverviewFormData>({
     resolver: zodResolver(complexOverviewSchema),
     defaultValues: {
-      name: initialData.name || '',
-      managerName: initialData.managerName || '',
-      logoUrl: initialData.logoUrl || getInheritedValue('logoUrl') || '',
-      website: initialData.website || '',
+      name: initialData.name || "",
+      managerName: initialData.managerName || "",
+      logoUrl: initialData.logoUrl || getInheritedValue("logoUrl") || "",
+      website: initialData.website || "",
       // Apply inheritance for business profile fields
-      yearEstablished: getInheritedValue('yearEstablished', initialData.yearEstablished),
-      mission: getInheritedValue('mission', initialData.mission) || '',
-      vision: getInheritedValue('vision', initialData.vision) || '',
-      overview: getInheritedValue('overview', initialData.overview) || '',
-      goals: getInheritedValue('goals', initialData.goals) || '',
-      ceoName: getInheritedValue('ceoName', initialData.ceoName) || '',
-      departments: initialData.departments || (
+      yearEstablished: getInheritedValue(
+        "yearEstablished",
+        initialData.yearEstablished,
+      ),
+      mission: getInheritedValue("mission", initialData.mission) || "",
+      vision: getInheritedValue("vision", initialData.vision) || "",
+      overview: getInheritedValue("overview", initialData.overview) || "",
+      goals: getInheritedValue("goals", initialData.goals) || "",
+      ceoName: getInheritedValue("ceoName", initialData.ceoName) || "",
+      departments: initialData.departments ||
         // Convert legacy departmentIds/newDepartmentNames to departments format
         [
-          ...(initialData.departmentIds || []).map(id => ({ _id: id, name: 'Loading...' })),
-          ...(initialData.newDepartmentNames || []).map(name => ({ name }))
-        ]
-      )
-    }
+          ...(initialData.departmentIds || []).map((id) => ({
+            _id: id,
+            name: "Loading...",
+          })),
+          ...(initialData.newDepartmentNames || []).map((name) => ({ name })),
+        ],
+    },
   });
 
   // Logo upload handler
@@ -162,15 +211,20 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
     if (!file) return;
 
     // Validate file type
-    const allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/gif'];
+    const allowedTypes = [
+      "image/svg+xml",
+      "image/png",
+      "image/jpeg",
+      "image/gif",
+    ];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Please upload an SVG, PNG, JPG or GIF file');
+      toast.error("Please upload an SVG, PNG, JPG or GIF file");
       return;
     }
 
     // Validate file size (2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('File size must be less than 2MB');
+      toast.error("File size must be less than 2MB");
       return;
     }
 
@@ -178,36 +232,37 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
     try {
       // For now, create a blob URL for preview
       const imageUrl = URL.createObjectURL(file);
-      form.setValue('logoUrl', imageUrl);
-      toast.success('Logo uploaded successfully');
+      form.setValue("logoUrl", imageUrl);
+      toast.success("Logo uploaded successfully");
     } catch (error) {
-      toast.error('Failed to upload logo');
+      toast.error("Failed to upload logo");
     } finally {
       setIsUploading(false);
     }
   };
 
   // Real-time validation for complex name uniqueness
-  const currentName = form.watch('name') || '';
+  const currentName = form.watch("name") || "";
   const isEditingExistingName = Boolean(
     initialData?.name &&
     initialData.name.trim().length > 0 &&
-    currentName.trim().toLowerCase() === initialData.name.trim().toLowerCase()
+    currentName.trim().toLowerCase() === initialData.name.trim().toLowerCase(),
   );
 
   const complexNameValidation = useUniqueValidation(
     currentName,
-    'complexName',
+    "complexName",
     800, // 800ms debounce delay
-    { organizationId: organizationData?.overview?.id || organizationData?.overview?._id },
-    isEditingExistingName // Skip validation if editing existing complex name
+    {
+      organizationId:
+        organizationData?.overview?.id || organizationData?.overview?._id,
+    },
+    isEditingExistingName, // Skip validation if editing existing complex name
   );
-
-
 
   // Handle department changes
   const handleDepartmentChange = (departments: Department[]) => {
-    form.setValue('departments', departments, { shouldValidate: true });
+    form.setValue("departments", departments, { shouldValidate: true });
   };
 
   const onSubmit = async (data: ComplexOverviewFormData) => {
@@ -219,37 +274,40 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
       // Validate and clean the data
       const cleanedData = Object.fromEntries(
         Object.entries(data).filter(([_, value]) => {
-          if (typeof value === 'string') {
-            return value.trim() !== '';
+          if (typeof value === "string") {
+            return value.trim() !== "";
           }
           return value !== undefined && value !== null;
-        })
+        }),
       ) as ComplexOverviewFormData;
 
       // Ensure required fields are present
-      if (!cleanedData.name || cleanedData.name.trim() === '') {
-        toast.error('Complex name is required');
+      if (!cleanedData.name || cleanedData.name.trim() === "") {
+        toast.error("Complex name is required");
         setIsSubmitting(false);
         return;
       }
 
       // Check unique validation before submitting
-      if (complexNameValidation.hasChecked && (!complexNameValidation.isValid || !complexNameValidation.isAvailable)) {
-        toast.error('Please fix the complex name issue before continuing');
+      if (
+        complexNameValidation.hasChecked &&
+        (!complexNameValidation.isValid || !complexNameValidation.isAvailable)
+      ) {
+        toast.error("Please fix the complex name issue before continuing");
         setIsSubmitting(false);
         return;
       }
 
       // If validation is still in progress, wait for it
       if (complexNameValidation.isChecking) {
-        toast.info('Please wait for name validation to complete');
+        toast.info("Please wait for name validation to complete");
         setIsSubmitting(false);
         return;
       }
 
       // Separate existing departments from new ones
-      const existingDepartments = data.departments.filter(dept => dept._id);
-      const newDepartments = data.departments.filter(dept => !dept._id);
+      const existingDepartments = data.departments.filter((dept) => dept._id);
+      const newDepartments = data.departments.filter((dept) => !dept._id);
 
       // Transform form data to ComplexOverviewDto
       const complexData: ComplexOverviewDto = {
@@ -265,42 +323,42 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
         goals: cleanedData.goals || undefined,
         ceoName: cleanedData.ceoName || undefined,
         // Department management - backend expects these fields
-        departmentIds: existingDepartments.map(dept => dept._id!),
-        newDepartmentNames: newDepartments.map(dept => dept.name)
+        departmentIds: existingDepartments.map((dept) => dept._id!),
+        newDepartmentNames: newDepartments.map((dept) => dept.name),
       };
 
-      console.log('📤 Submitting complex overview:', complexData);
+      console.log("📤 Submitting complex overview:", complexData);
 
       // Save to backend
       const response = await saveComplexOverview(complexData);
 
       if (response.success) {
-        console.log('✅ Complex overview saved successfully:', response);
-        toast.success('Complex overview saved successfully!');
+        console.log("✅ Complex overview saved successfully:", response);
+        toast.success("Complex overview saved successfully!");
 
         // Pass the response data including entityId to the parent
         onNext({
           ...complexData,
           entityId: response.entityId,
-          complexId: response.entityId
+          complexId: response.entityId,
         } as any);
       } else {
-        throw new Error(response.message || 'Failed to save complex overview');
+        throw new Error(response.message || "Failed to save complex overview");
       }
     } catch (error: any) {
-      console.error('❌ Error saving complex overview:', error);
+      console.error("❌ Error saving complex overview:", error);
 
       if (error.validationError && error.errors) {
         // Handle field-specific validation errors
         error.errors.forEach((err: any) => {
           form.setError(err.field, {
-            type: 'manual',
-            message: err.message
+            type: "manual",
+            message: err.message,
           });
         });
-        toast.error('Please check the form for errors');
+        toast.error("Please check the form for errors");
       } else {
-        toast.error(error.message || 'Failed to save complex overview');
+        toast.error(error.message || "Failed to save complex overview");
       }
     } finally {
       setIsSubmitting(false);
@@ -329,10 +387,11 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
           </p>
         </div>
 
-
-
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-8">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="w-full space-y-8"
+          >
             {/* Logo and Complex Name Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div>
@@ -348,11 +407,13 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
                         <div
                           className="border-2 border-dashed border-border bg-muted/30 rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
                           onClick={() => {
-                            const input = document.createElement('input');
-                            input.type = 'file';
-                            input.accept = 'image/svg+xml,image/png,image/jpeg,image/gif';
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.accept =
+                              "image/svg+xml,image/png,image/jpeg,image/gif";
                             input.onchange = (e) => {
-                              const file = (e.target as HTMLInputElement).files?.[0];
+                              const file = (e.target as HTMLInputElement)
+                                .files?.[0];
                               if (file) handleFileUpload(file);
                             };
                             input.click();
@@ -360,7 +421,11 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
                         >
                           {field.value ? (
                             <div className="flex flex-col items-center">
-                              <img src={field.value} alt="Logo" className="w-12 h-12 object-contain mb-2 rounded" />
+                              <img
+                                src={field.value}
+                                alt="Logo"
+                                className="w-12 h-12 object-contain mb-2 rounded"
+                              />
                               <p className="text-sm text-primary">
                                 Logo uploaded successfully
                               </p>
@@ -369,7 +434,9 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
                             <>
                               <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
                               <p className="text-sm mb-1 text-primary">
-                                {isUploading ? 'Uploading...' : 'Click or Drag file to this area to upload'}
+                                {isUploading
+                                  ? "Uploading..."
+                                  : "Click or Drag file to this area to upload"}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 SVG, PNG, JPG or GIF, Maximum file size 2MB.
@@ -386,109 +453,107 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
 
               <div className="space-y-6">
                 {/* Complex Name Field */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-primary font-lato">
-                    Complex Name<span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                              <Building className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                            </div>
-                            <Input
-                              {...field}
-                              placeholder="Enter Complex Name"
-                              className={`h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground ${complexNameValidation.hasChecked && (!complexNameValidation.isValid || !complexNameValidation.isAvailable) ? 'border-red-500' : ''}`}
-                              style={{
-                                boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                borderRadius: '8px'
-                              }}
-                              disabled={isSubmitting}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                        <ValidationMessage validation={complexNameValidation} />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FieldInput
+                  control={form.control}
+                  name="name"
+                  placeholder="Enter Complex Name"
+                  validate
+                  validation={complexNameValidation}
+                  layout="inline"
+                  variant="flat"
+                  label={
+                    <span className="flex items-center gap-x-1">
+                      <Building
+                        className="h-[18px] w-[18px] text-primary"
+                        strokeWidth={1.5}
+                      />
+                      Complex Name
+                    </span>
+                  }
+                  required={true}
+                  disabled={isSubmitting}
+                />
 
                 {/* Manager Name Field */}
-                <FormFieldWithIcon
+                <FieldInput
                   control={form.control}
                   name="managerName"
-                  label="Complex Manager"
                   placeholder="Manager's full name"
-                  icon={User}
+                  layout="inline"
+                  variant="flat"
+                  label={
+                    <span className="flex items-center gap-x-1">
+                      <User
+                        className="h-[18px] w-[18px] text-primary"
+                        strokeWidth={1.5}
+                      />
+                      Complex Manager
+                    </span>
+                  }
+                  required={true}
                   disabled={isSubmitting}
                 />
 
                 {/* Year Established Field */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-primary font-lato">
-                    Year Established
-                  </label>
-                  <FormField
-                    control={form.control}
-                    name="yearEstablished"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                              <Calendar className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                            </div>
-                            <Input
-                              type="number"
-                              value={field.value || ''}
-                              name={field.name}
-                              onBlur={field.onBlur}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                field.onChange(value ? parseInt(value) : undefined);
-                              }}
-                              placeholder="Enter Year"
-                              className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                              style={{
-                                boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                borderRadius: '8px'
-                              }}
-                              disabled={isSubmitting}
-                            />
-                          </div>
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FieldInput
+                  control={form.control}
+                  name="yearEstablished"
+                  placeholder="Enter Year"
+                  layout="inline"
+                  variant="flat"
+                  type="number"
+                  label={
+                    <span className="flex items-center gap-x-1">
+                      <Calendar
+                        className="h-[18px] w-[18px] text-primary"
+                        strokeWidth={1.5}
+                      />
+                      Year Established
+                    </span>
+                  }
+                  required={true}
+                  disabled={isSubmitting}
+                />
               </div>
             </div>
 
             {/* Website Field */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <FormFieldWithIcon
+              <FieldInput
                 control={form.control}
                 name="website"
-                label="Website"
                 placeholder="https://yourcomplex.com"
-                icon={Globe}
+                layout="inline"
+                variant="flat"
+                type="url"
+                label={
+                  <span className="flex items-center gap-x-1">
+                    <Globe
+                      className="h-[18px] w-[18px] text-primary"
+                      strokeWidth={1.5}
+                    />
+                    Website
+                  </span>
+                }
+                required={true}
                 disabled={isSubmitting}
               />
-
-              <FormFieldWithIcon
+              <FieldInput
                 control={form.control}
                 name="ceoName"
-                label="CEO/Director Name"
-                placeholder="Name of CEO or Director"
-                icon={User}
+                placeholder="Enter CEO/Director Name"
+                layout="inline"
+                variant="flat"
+                label={
+                  <span className="flex items-center gap-x-1">
+                    <User
+                      className="h-[18px] w-[18px] text-primary"
+                      strokeWidth={1.5}
+                    />
+                    CEO/Director Name
+                  </span>
+                }
+                required={true}
                 disabled={isSubmitting}
               />
             </div>
@@ -497,130 +562,74 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
             <CollapsibleCard
               title="Business Profile"
               isOpen={isBusinessProfileExpanded}
-              onToggle={() => setIsBusinessProfileExpanded(!isBusinessProfileExpanded)}
+              onToggle={() =>
+                setIsBusinessProfileExpanded(!isBusinessProfileExpanded)
+              }
             >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Mission Field */}
-                <FormField
+                <FieldTextarea
                   control={form.control}
                   name="mission"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <div className="relative">
-                          <div className="absolute left-4 top-4 z-10">
-                            <Target className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                          </div>
-                          <Textarea
-                            {...field}
-                            placeholder="Enter Mission Statement"
-                            className="min-h-[100px] pl-12 pr-4 pt-4 pb-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground resize-none"
-                            style={{
-                              boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                              borderRadius: '8px'
-                            }}
-                            disabled={isSubmitting}
-                          />
-                        </div>
-                      </FormControl>
-                      <div className="text-xs text-muted-foreground">
-                        {field.value?.length || 0}/500 characters
-                      </div>
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  placeholder="Enter Mission Statement"
+                  layout="inline"
+                  variant="flat"
+                  label={
+                    <span className="flex items-center gap-x-1">
+                      <Target
+                        className="h-[18px] w-[18px] text-primary"
+                        strokeWidth={1.5}
+                      />
+                      CEO/Director Name
+                    </span>
+                  }
+                  disabled={isSubmitting}
+                  maxLength={500}
                 />
 
                 {/* Vision Field */}
-                <FormField
+                <FieldTextarea
                   control={form.control}
                   name="vision"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <div className="relative">
-                          <div className="absolute left-4 top-4 z-10">
-                            <Eye className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                          </div>
-                          <Textarea
-                            {...field}
-                            placeholder="Enter Vision Statement"
-                            className="min-h-[100px] pl-12 pr-4 pt-4 pb-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground resize-none"
-                            style={{
-                              boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                              borderRadius: '8px'
-                            }}
-                            disabled={isSubmitting}
-                          />
-                        </div>
-                      </FormControl>
-                      <div className="text-xs text-muted-foreground">
-                        {field.value?.length || 0}/500 characters
-                      </div>
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  placeholder="Enter Vision Statement"
+                  layout="inline"
+                  variant="flat"
+                  label={
+                    <span className="flex items-center gap-x-1">
+                      <Eye
+                        className="h-[18px] w-[18px] text-primary"
+                        strokeWidth={1.5}
+                      />
+                      CEO/Director Name
+                    </span>
+                  }
+                  disabled={isSubmitting}
+                  maxLength={500}
                 />
               </div>
 
               {/* Complex Overview */}
-              <FormField
+              <FieldTextarea
                 control={form.control}
                 name="overview"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="block text-sm font-bold text-primary font-lato">
-                      Complex Overview
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Describe your complex's services and specialties..."
-                        className="min-h-[120px] pl-4 pr-4 pt-4 pb-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground resize-none"
-                        style={{
-                          boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                          borderRadius: '8px'
-                        }}
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <div className="text-xs text-muted-foreground">
-                      {field.value?.length || 0}/1000 characters
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                placeholder="Describe your complex's services and specialties..."
+                layout="inline"
+                variant="flat"
+                label={"Complex Overview"}
+                disabled={isSubmitting}
+                maxLength={1000}
               />
 
               {/* Complex Goals */}
-              <FormField
+              <FieldTextarea
                 control={form.control}
                 name="goals"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="block text-sm font-bold text-primary font-lato">
-                      Complex Goals
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="What are your complex's main goals and objectives?"
-                        className="min-h-[120px] pl-4 pr-4 pt-4 pb-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground resize-none"
-                        style={{
-                          boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                          borderRadius: '8px'
-                        }}
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <div className="text-xs text-muted-foreground">
-                      {field.value?.length || 0}/1000 characters
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                placeholder="What are your complex's main goals and objectives?"
+                layout="inline"
+                variant="flat"
+                label={"Complex Goals"}
+                disabled={isSubmitting}
+                maxLength={1000}
               />
             </CollapsibleCard>
 
@@ -650,8 +659,8 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
                       />
                     </FormControl>
                     <div className="text-sm text-muted-foreground">
-                      Search existing departments or type new names to create them.
-                      Selected departments will be linked to your complex.
+                      Search existing departments or type new names to create
+                      them. Selected departments will be linked to your complex.
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -673,7 +682,11 @@ export const ComplexOverviewForm: React.FC<ComplexOverviewFormProps> = ({
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || complexNameValidation.isChecking || !form.formState.isValid}
+                disabled={
+                  isSubmitting ||
+                  complexNameValidation.isChecking ||
+                  !form.formState.isValid
+                }
                 className="w-full sm:w-auto h-[48px] px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-lato disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
