@@ -1,23 +1,40 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { 
-  ChevronLeftIcon, 
-  ChevronRightIcon, 
-  ChevronDownIcon, 
+import React, { useState } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
   ChevronUpIcon,
-  MapPinIcon, 
-  PhoneIcon, 
-  MailIcon, 
+  MapPinIcon,
+  PhoneIcon,
+  MailIcon,
   GlobeIcon,
   PlusIcon,
   TrashIcon,
@@ -30,20 +47,26 @@ import {
   Twitter,
   Linkedin,
   MessageCircle,
-  Youtube
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { clinicContactSchema, type ClinicContact } from '@/lib/validation/onboarding';
-import { ClinicContactDto } from '@/types/onboarding';
-import { saveClinicContact } from '@/api/onboardingApiClient';
+  Youtube,
+  HeartIcon,
+  UserIcon,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  clinicContactSchema,
+  type ClinicContact,
+} from "@/lib/validation/onboarding";
+import { ClinicContactDto } from "@/types/onboarding";
+import { saveClinicContact } from "@/api/onboardingApiClient";
 import { useClivinaTheme } from "@/hooks/useClivinaTheme";
+import FieldInput from "@/components/global/FieldInput";
 
 interface ClinicContactFormProps {
   onNext: (data: ClinicContactDto) => void;
   onPrevious: () => void;
   initialData?: Partial<ClinicContactDto>;
   isLoading?: boolean;
-  planType?: 'company' | 'complex' | 'clinic';
+  planType?: "company" | "complex" | "clinic";
   formData?: any;
   currentStep?: number;
 }
@@ -55,7 +78,7 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
   isLoading = false,
   planType,
   formData,
-  currentStep
+  currentStep,
 }) => {
   const [isAddressExpanded, setIsAddressExpanded] = useState(true);
   const [isContactExpanded, setIsContactExpanded] = useState(false);
@@ -66,42 +89,46 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
     resolver: zodResolver(clinicContactSchema),
     defaultValues: {
       address: initialData.address || {
-        street: '',
-        city: '',
-        state: '',
-        postalCode: '',
-        country: '',
-        googleLocation: ''
+        street: "",
+        city: "",
+        state: "",
+        postalCode: "",
+        country: "",
+        googleLocation: "",
       },
-      email: initialData.email || '',
-      phoneNumbers: initialData.phoneNumbers?.map(phone => ({
+      email: initialData.email || "",
+      phoneNumbers: initialData.phoneNumbers?.map((phone) => ({
         ...phone,
-        type: phone.type || 'primary'
-      })) || [{ number: '', type: 'primary' as const, label: '' }],
+        type: phone.type || "primary",
+      })) || [{ number: "", type: "primary" as const, label: "" }],
       emergencyContact: initialData.emergencyContact || {
-        name: '',
-        phone: '',
-        email: '',
-        relationship: ''
+        name: "",
+        phone: "",
+        email: "",
+        relationship: "",
       },
       socialMediaLinks: initialData.socialMediaLinks || {
-        facebook: '',
-        instagram: '',
-        twitter: '',
-        linkedin: '',
-        whatsapp: '',
-        youtube: ''
-      }
-    }
+        facebook: "",
+        instagram: "",
+        twitter: "",
+        linkedin: "",
+        whatsapp: "",
+        youtube: "",
+      },
+    },
   });
 
-  const { fields: phoneFields, append: appendPhone, remove: removePhone } = useFieldArray({
+  const {
+    fields: phoneFields,
+    append: appendPhone,
+    remove: removePhone,
+  } = useFieldArray({
     control: form.control,
-    name: 'phoneNumbers'
+    name: "phoneNumbers",
   });
 
   const addPhoneNumber = () => {
-    appendPhone({ number: '', type: 'secondary', label: '' });
+    appendPhone({ number: "", type: "secondary", label: "" });
   };
 
   const onSubmit = async (data: ClinicContact) => {
@@ -110,24 +137,28 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
       const contactData: ClinicContactDto = {
         address: data.address,
         email: data.email || undefined,
-        phoneNumbers: data.phoneNumbers?.filter(phone => phone.number.trim() !== ''),
+        phoneNumbers: data.phoneNumbers?.filter(
+          (phone) => phone.number.trim() !== "",
+        ),
         emergencyContact: data.emergencyContact,
-        socialMediaLinks: data.socialMediaLinks
+        socialMediaLinks: data.socialMediaLinks,
       };
 
       // Save to backend
       const response = await saveClinicContact(contactData);
-      
+
       if (response.success) {
-        toast.success('Clinic contact information saved successfully!');
+        toast.success("Clinic contact information saved successfully!");
         onNext(contactData);
       } else {
-        throw new Error(response.message || 'Failed to save clinic contact information');
+        throw new Error(
+          response.message || "Failed to save clinic contact information",
+        );
       }
     } catch (error: any) {
-      console.error('Error saving clinic contact information:', error);
-      toast.error('Failed to save clinic contact information', {
-        description: error.message || 'An unexpected error occurred'
+      console.error("Error saving clinic contact information:", error);
+      toast.error("Failed to save clinic contact information", {
+        description: error.message || "An unexpected error occurred",
       });
     }
   };
@@ -152,17 +183,20 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
             Contact Information
           </h1>
           <p className="text-muted-foreground font-lato">
-            Provide contact details for your clinic including address, phone numbers, and emergency contacts
+            Provide contact details for your clinic including address, phone
+            numbers, and emergency contacts
           </p>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-8">
-            
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="w-full space-y-8"
+          >
             {/* Address Information Section */}
             <Card className="bg-background border-border shadow-sm">
               <div className="p-6">
-                <div 
+                <div
                   className="flex items-center justify-between mb-6 cursor-pointer"
                   onClick={() => setIsAddressExpanded(!isAddressExpanded)}
                 >
@@ -177,199 +211,104 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                 </div>
 
                 {isAddressExpanded && (
-                  <div className="space-y-6">
-                    {/* Street Address */}
-                    <div className="space-y-2">
-                      <label className="block text-sm font-bold text-primary font-lato">Street Address</label>
-                      <FormField
-                        control={form.control}
-                        name="address.street"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <div className="relative">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                  <Building className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                </div>
-                                <Input
-                                  {...field}
-                                  placeholder="123 Medical Center Street"
-                                  className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                  style={{
-                                    boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                    borderRadius: '8px'
-                                  }}
-                                  disabled={isLoading}
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    {/* City and State Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* City */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">City</label>
-                        <FormField
-                          control={form.control}
-                          name="address.city"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <MapPinIcon className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="City name"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      {/* State */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">State/Province</label>
-                        <FormField
-                          control={form.control}
-                          name="address.state"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <MapPinIcon className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="State or Province"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Postal Code and Country Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Postal Code */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">Postal Code</label>
-                        <FormField
-                          control={form.control}
-                          name="address.postalCode"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <Hash className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="12345"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      {/* Country */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">Country</label>
-                        <FormField
-                          control={form.control}
-                          name="address.country"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <GlobeIcon className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="Country name"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Google Location */}
-                    <div className="space-y-2">
-                      <label className="block text-sm font-bold text-primary font-lato">Google Maps Location</label>
-                      <FormField
+                  <CardContent className="px-6 pb-6 pt-0 space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Google Location */}
+                      <FieldInput
                         control={form.control}
                         name="address.googleLocation"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <div className="relative">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                  <GlobeIcon className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                </div>
-                                <Input
-                                  {...field}
-                                  placeholder="Google Maps URL or Place ID"
-                                  className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                  style={{
-                                    boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                    borderRadius: '8px'
-                                  }}
-                                  disabled={isLoading}
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <MapPinIcon
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            Google Maps Location
+                          </span>
+                        }
+                        placeholder="Google Maps URL or Place ID"
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
+                      {/* Company Website */}
+                      <FieldInput
+                        control={form.control}
+                        name="address.googleLocation"
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <GlobeIcon
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            Company Website
+                          </span>
+                        }
+                        placeholder="Website URL"
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
                       />
                     </div>
-                  </div>
+                    {/* Street Address */}
+                    <FieldInput
+                      control={form.control}
+                      name="address.street"
+                      label="Street Address"
+                      placeholder="123 Main Street"
+                      layout="inline"
+                      variant="flat"
+                      disabled={isLoading}
+                    />
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* City */}
+                      <FieldInput
+                        control={form.control}
+                        name="address.city"
+                        label="City"
+                        placeholder="City name"
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
+
+                      {/* State */}
+                      <FieldInput
+                        control={form.control}
+                        name="address.state"
+                        label="State/Province"
+                        placeholder="State or Province"
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Postal Code */}
+                      <FieldInput
+                        control={form.control}
+                        name="address.postalCode"
+                        label="Postal Code"
+                        placeholder="12345"
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
+
+                      {/* Country */}
+                      <FieldInput
+                        control={form.control}
+                        name="address.country"
+                        label="Country"
+                        placeholder="Country name"
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </CardContent>
                 )}
               </div>
             </Card>
@@ -377,7 +316,7 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
             {/* Contact Information Section */}
             <Card className="bg-background border-border shadow-sm">
               <div className="p-6">
-                <div 
+                <div
                   className="flex items-center justify-between mb-6 cursor-pointer"
                   onClick={() => setIsContactExpanded(!isContactExpanded)}
                 >
@@ -395,7 +334,9 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                   <div className="space-y-6">
                     {/* Email */}
                     <div className="space-y-2">
-                      <label className="block text-sm font-bold text-primary font-lato">Email Address</label>
+                      <label className="block text-sm font-bold text-primary font-lato">
+                        Email Address
+                      </label>
                       <FormField
                         control={form.control}
                         name="email"
@@ -404,7 +345,10 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                             <FormControl>
                               <div className="relative">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                  <MailIcon className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
+                                  <MailIcon
+                                    className="h-[18px] w-[18px] text-primary"
+                                    strokeWidth={1.5}
+                                  />
                                 </div>
                                 <Input
                                   {...field}
@@ -412,8 +356,9 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                                   placeholder="clinic@example.com"
                                   className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
                                   style={{
-                                    boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                    borderRadius: '8px'
+                                    boxShadow:
+                                      "0px 0px 1px 1px rgba(21, 197, 206, 0.16)",
+                                    borderRadius: "8px",
                                   }}
                                   disabled={isLoading}
                                 />
@@ -427,8 +372,10 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
 
                     {/* Phone Numbers */}
                     <div className="space-y-4">
-                      <label className="block text-sm font-bold text-primary font-lato">Phone Numbers</label>
-                      
+                      <label className="block text-sm font-bold text-primary font-lato">
+                        Phone Numbers
+                      </label>
+
                       <div className="space-y-3">
                         {phoneFields.map((field, index) => (
                           <div key={field.id} className="flex items-end gap-3">
@@ -441,15 +388,19 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                                     <FormControl>
                                       <div className="relative">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                          <PhoneIcon className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
+                                          <PhoneIcon
+                                            className="h-[18px] w-[18px] text-primary"
+                                            strokeWidth={1.5}
+                                          />
                                         </div>
                                         <Input
                                           {...field}
                                           placeholder="Phone number"
                                           className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
                                           style={{
-                                            boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                            borderRadius: '8px'
+                                            boxShadow:
+                                              "0px 0px 1px 1px rgba(21, 197, 206, 0.16)",
+                                            borderRadius: "8px",
                                           }}
                                           disabled={isLoading}
                                         />
@@ -460,27 +411,41 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                                 )}
                               />
                             </div>
-                            
+
                             <div className="w-32">
                               <FormField
                                 control={form.control}
                                 name={`phoneNumbers.${index}.type`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                      <SelectTrigger className="h-[48px] border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm font-lato"
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      value={field.value}
+                                    >
+                                      <SelectTrigger
+                                        className="h-[48px] border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm font-lato"
                                         style={{
-                                          boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                          borderRadius: '8px'
-                                        }}>
+                                          boxShadow:
+                                            "0px 0px 1px 1px rgba(21, 197, 206, 0.16)",
+                                          borderRadius: "8px",
+                                        }}
+                                      >
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="primary">Primary</SelectItem>
-                                        <SelectItem value="secondary">Secondary</SelectItem>
-                                        <SelectItem value="emergency">Emergency</SelectItem>
+                                        <SelectItem value="primary">
+                                          Primary
+                                        </SelectItem>
+                                        <SelectItem value="secondary">
+                                          Secondary
+                                        </SelectItem>
+                                        <SelectItem value="emergency">
+                                          Emergency
+                                        </SelectItem>
                                         <SelectItem value="fax">Fax</SelectItem>
-                                        <SelectItem value="mobile">Mobile</SelectItem>
+                                        <SelectItem value="mobile">
+                                          Mobile
+                                        </SelectItem>
                                       </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -488,7 +453,7 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                                 )}
                               />
                             </div>
-                            
+
                             <div className="w-24">
                               <FormField
                                 control={form.control}
@@ -498,15 +463,19 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                                     <FormControl>
                                       <div className="relative">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                          <Hash className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
+                                          <Hash
+                                            className="h-[18px] w-[18px] text-primary"
+                                            strokeWidth={1.5}
+                                          />
                                         </div>
                                         <Input
                                           {...field}
                                           placeholder="Label"
                                           className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
                                           style={{
-                                            boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                            borderRadius: '8px'
+                                            boxShadow:
+                                              "0px 0px 1px 1px rgba(21, 197, 206, 0.16)",
+                                            borderRadius: "8px",
                                           }}
                                           disabled={isLoading}
                                         />
@@ -517,7 +486,7 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                                 )}
                               />
                             </div>
-                            
+
                             {phoneFields.length > 1 && (
                               <Button
                                 type="button"
@@ -532,7 +501,7 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                           </div>
                         ))}
                       </div>
-                      
+
                       {phoneFields.length < 5 && (
                         <Button
                           type="button"
@@ -554,7 +523,7 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
             {/* Emergency Contact Section */}
             <Card className="bg-background border-border shadow-sm">
               <div className="p-6">
-                <div 
+                <div
                   className="flex items-center justify-between mb-6 cursor-pointer"
                   onClick={() => setIsEmergencyExpanded(!isEmergencyExpanded)}
                 >
@@ -569,138 +538,88 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                 </div>
 
                 {isEmergencyExpanded && (
-                  <div className="space-y-6">
-                    {/* Contact Name and Relationship Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <CardContent className="px-6 pb-6 pt-0 space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                       {/* Emergency Contact Name */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">Contact Name</label>
-                        <FormField
-                          control={form.control}
-                          name="emergencyContact.name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <User className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="Dr. John Smith"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      <FieldInput
+                        control={form.control}
+                        name="emergencyContact.name"
+                        placeholder="Contact Name"
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <UserIcon
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            Contact Name
+                          </span>
+                        }
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
+
+                      {/* Emergency Contact Phone */}
+                      <FieldInput
+                        control={form.control}
+                        name="emergencyContact.phone"
+                        placeholder="+1234567890"
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <PhoneIcon
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            Contact Phone
+                          </span>
+                        }
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Emergency Contact Email */}
+                      <FieldInput
+                        type="email"
+                        control={form.control}
+                        name="emergencyContact.email"
+                        placeholder="emergency@example.com"
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <MailIcon
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            Contact Email
+                          </span>
+                        }
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
 
                       {/* Relationship */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">Relationship</label>
-                        <FormField
-                          control={form.control}
-                          name="emergencyContact.relationship"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <User className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="Head Doctor, Manager, etc."
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      <FieldInput
+                        control={form.control}
+                        name="emergencyContact.relationship"
+                        placeholder="Manager, Owner, etc."
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <HeartIcon
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            Relationship
+                          </span>
+                        }
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
                     </div>
-
-                    {/* Contact Phone and Email Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Emergency Contact Phone */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">Contact Phone</label>
-                        <FormField
-                          control={form.control}
-                          name="emergencyContact.phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <PhoneIcon className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="+966501234567"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      {/* Emergency Contact Email */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">Contact Email</label>
-                        <FormField
-                          control={form.control}
-                          name="emergencyContact.email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <MailIcon className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    type="email"
-                                    placeholder="emergency@clinic.com"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  </CardContent>
                 )}
               </div>
             </Card>
@@ -708,9 +627,11 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
             {/* Social Media Section */}
             <Card className="bg-background border-border shadow-sm">
               <div className="p-6">
-                <div 
+                <div
                   className="flex items-center justify-between mb-6 cursor-pointer"
-                  onClick={() => setIsSocialMediaExpanded(!isSocialMediaExpanded)}
+                  onClick={() =>
+                    setIsSocialMediaExpanded(!isSocialMediaExpanded)
+                  }
                 >
                   <h3 className="text-lg font-bold text-primary font-lato">
                     Social Media & Web Presence
@@ -723,201 +644,126 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                 </div>
 
                 {isSocialMediaExpanded && (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <CardContent className="px-6 pb-6 pt-0 space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                       {/* Facebook */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">Facebook</label>
-                        <FormField
-                          control={form.control}
-                          name="socialMediaLinks.facebook"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <Facebook className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="https://facebook.com/yourclinic"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      <FieldInput
+                        control={form.control}
+                        name="socialMediaLinks.facebook"
+                        placeholder="https://facebook.com/yourcompany"
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <Facebook
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            Facebook
+                          </span>
+                        }
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
 
                       {/* Instagram */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">Instagram</label>
-                        <FormField
-                          control={form.control}
-                          name="socialMediaLinks.instagram"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <Instagram className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="https://instagram.com/yourclinic"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      <FieldInput
+                        control={form.control}
+                        name="socialMediaLinks.instagram"
+                        placeholder="https://instagram.com/yourcompany"
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <Instagram
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            Instagram
+                          </span>
+                        }
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
 
                       {/* Twitter */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">Twitter</label>
-                        <FormField
-                          control={form.control}
-                          name="socialMediaLinks.twitter"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <Twitter className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="https://twitter.com/yourclinic"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      <FieldInput
+                        control={form.control}
+                        name="socialMediaLinks.twitter"
+                        placeholder="https://twitter.com/yourcompany"
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <Twitter
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            Twitter
+                          </span>
+                        }
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
 
                       {/* LinkedIn */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">LinkedIn</label>
-                        <FormField
-                          control={form.control}
-                          name="socialMediaLinks.linkedin"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <Linkedin className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="https://linkedin.com/company/yourclinic"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      <FieldInput
+                        control={form.control}
+                        name="socialMediaLinks.linkedin"
+                        placeholder="https://linkedin.com/company/yourcompany"
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <Linkedin
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            LinkedIn
+                          </span>
+                        }
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
 
                       {/* WhatsApp */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">WhatsApp</label>
-                        <FormField
-                          control={form.control}
-                          name="socialMediaLinks.whatsapp"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <MessageCircle className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    placeholder="https://wa.me/966501234567"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      <FieldInput
+                        control={form.control}
+                        name="socialMediaLinks.whatsapp"
+                        placeholder="https://wa.me/1234567890"
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <MessageCircle
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            WhatsApp
+                          </span>
+                        }
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
 
                       {/* YouTube */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold text-primary font-lato">YouTube</label>
-                        <FormField
-                          control={form.control}
-                          name="socialMediaLinks.youtube"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="relative">
-                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                                    <Youtube className="h-[18px] w-[18px] text-primary" strokeWidth={1.5} />
-                                  </div>
-                                  <Input
-                                    {...field}
-                                    value={field.value || ''}
-                                    placeholder="https://youtube.com/@yourclinic"
-                                    className="h-[48px] pl-12 pr-4 text-base font-lato border-border bg-background text-foreground focus-visible:ring-ring focus-visible:border-ring shadow-sm placeholder:text-muted-foreground"
-                                    style={{
-                                      boxShadow: '0px 0px 1px 1px rgba(21, 197, 206, 0.16)',
-                                      borderRadius: '8px'
-                                    }}
-                                    disabled={isLoading}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                      <FieldInput
+                        control={form.control}
+                        name="socialMediaLinks.youtube"
+                        placeholder="https://youtube.com/@yourcompany"
+                        label={
+                          <span className="flex items-center gap-x-1">
+                            <Youtube
+                              className="h-[18px] w-[18px] text-primary"
+                              strokeWidth={1.5}
+                            />
+                            YouTube
+                          </span>
+                        }
+                        layout="inline"
+                        variant="flat"
+                        disabled={isLoading}
+                      />
                     </div>
-                  </div>
+                  </CardContent>
                 )}
               </div>
             </Card>
-
-
 
             {/* Navigation Buttons */}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-12">
@@ -950,7 +796,6 @@ export const ClinicContactForm: React.FC<ClinicContactFormProps> = ({
                 )}
               </Button>
             </div>
-
           </form>
         </Form>
       </div>

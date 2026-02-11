@@ -25,6 +25,7 @@ type Props<TFieldValues extends FieldValues> = {
   control: Control<TFieldValues>;
   description?: string;
   icon?: React.ReactNode;
+  isDecimal?: boolean; // for number inputs, allow decimals instead of just integers
   required?: boolean;
   validate?: boolean;
   validation?: UniqueValidationState;
@@ -53,6 +54,7 @@ export default function FieldInput<TFieldValues extends FieldValues>({
   control,
   description,
   icon,
+  isDecimal = false,
   required = false,
   validate = false,
   validation,
@@ -155,9 +157,12 @@ export default function FieldInput<TFieldValues extends FieldValues>({
                   style={inputStyle}
                   onChange={(e) => {
                     field.onChange(e);
-                    if (type === "number") {
+                    if (type === "number" && !isDecimal) {
                       const value = e.target.value;
                       field.onChange(value ? parseInt(value) : undefined);
+                    } else if (type === "number" && isDecimal) {
+                      const value = e.target.value;
+                      field.onChange(value ? parseFloat(value) : undefined);
                     }
                   }}
                 />
