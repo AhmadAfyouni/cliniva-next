@@ -1,7 +1,11 @@
 'use client';
 
+// This is a demo/development page - skip static generation
+export const dynamic = 'force-dynamic';
+
+import { useEffect, useState } from 'react';
 import { useClivinaTheme } from '@/hooks/useClivinaTheme';
-import { ThemeToggleIcon } from '@/components/ui/theme-toggle';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { 
   H1, H2, H3, H4, H5, H6, 
   Title, Paragraph, Body, Caption, Label,
@@ -9,7 +13,7 @@ import {
 } from '@/components/ui/typography';
 import { designSystem } from '@/lib/design-system';
 
-export default function DesignSystemPage() {
+function DesignSystemContent() {
   const { theme, colors } = useClivinaTheme();
 
   return (
@@ -18,7 +22,7 @@ export default function DesignSystemPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <H1>Cliniva Design System</H1>
-          <ThemeToggleIcon />
+          <ThemeToggle />
         </div>
 
         {/* Typography Section */}
@@ -311,4 +315,19 @@ const primaryColor = designSystem.colors.primary[500];`}</code>
       </div>
     </div>
   );
+}
+
+
+export default function DesignSystemPage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  return <DesignSystemContent />;
 }

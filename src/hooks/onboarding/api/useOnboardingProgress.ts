@@ -165,7 +165,7 @@ export const useAutoSaveProgress = (userId?: string, interval: number = 30000) =
     const progressData: Partial<OnboardingProgressResult> = {
       userId,
       planType: planType!,
-      currentStep: progress.currentStep,
+      currentStep: typeof progress.currentStep === 'string' ? parseInt(progress.currentStep, 10) : progress.currentStep,
       completedSteps: progress.completedSteps,
       lastUpdated: new Date().toISOString(),
       data: {
@@ -190,14 +190,16 @@ export const useAutoSaveProgress = (userId?: string, interval: number = 30000) =
 export const useProgressStats = () => {
   const { progress, planType, getTotalSteps, getProgressPercentage } = useOnboardingStore();
 
+  const currentStepNum = typeof progress.currentStep === 'string' ? parseInt(progress.currentStep, 10) : (progress.currentStep || 1);
+
   const stats = {
-    currentStep: progress.currentStep,
+    currentStep: currentStepNum,
     totalSteps: getTotalSteps(),
     completedSteps: progress.completedSteps.length,
     progressPercentage: getProgressPercentage(),
     planType,
     isComplete: getProgressPercentage() === 100,
-    remainingSteps: getTotalSteps() - progress.currentStep
+    remainingSteps: getTotalSteps() - currentStepNum
   };
 
   return stats;
@@ -214,12 +216,14 @@ export const useProgressValidation = () => {
       issues.push('Plan type not selected');
     }
 
-    if (progress.currentStep < 1) {
+    const currentStepNum = typeof progress.currentStep === 'string' ? parseInt(progress.currentStep, 10) : (progress.currentStep || 1);
+
+    if (currentStepNum < 1) {
       issues.push('Invalid current step');
     }
 
     // Check if user can proceed to current step
-    if (!canProceedToStep(progress.currentStep)) {
+    if (!canProceedToStep(currentStepNum)) {
       issues.push('Cannot proceed to current step - previous steps incomplete');
     }
 

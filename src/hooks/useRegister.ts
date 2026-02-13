@@ -50,6 +50,8 @@ export const useRegister = () => {
       const result = await apiHelpers.register({
         ...data,
         role: 'patient',
+        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+        gender: data.gender as 'male' | 'female' | 'other' | undefined,
       });
 
       // Auto-login after successful registration

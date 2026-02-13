@@ -9,8 +9,8 @@ import { OnboardingData } from '@/hooks/useRegister';
 import { OrganizationOverviewForm } from './OrganizationOverviewForm';
 import { OrganizationContactForm } from './OrganizationContactForm';
 import { OrganizationLegalForm } from './OrganizationLegalForm';
-import { ComplexOverviewForm } from './ComplexOverviewForm';
-import { ComplexWorkingHoursForm } from './ComplexWorkingHoursForm';
+import { ComplexOverviewForm } from './forms/ComplexOverviewForm';
+import ComplexWorkingHoursForm from './ComplexWorkingHoursForm';
 
 // Import API functions
 import { 
@@ -246,7 +246,7 @@ export function OnboardingFlow({
       case 'complex-overview':
         return (
           <ComplexOverviewForm
-            data={stepData?.overview}
+            initialData={stepData?.overview}
             onNext={handleNext}
             onPrevious={handlePrevious}
             isLoading={isLoading}
@@ -255,10 +255,9 @@ export function OnboardingFlow({
       case 'complex-hours':
         return (
           <ComplexWorkingHoursForm
-            data={stepData?.workingHours}
+            initialData={stepData?.workingHours}
             onNext={handleNext}
             onPrevious={handlePrevious}
-            isLoading={isLoading}
           />
         );
       default:

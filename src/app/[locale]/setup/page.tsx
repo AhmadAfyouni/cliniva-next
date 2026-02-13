@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { OnboardingFlow, OnboardingData } from '@/components/onboarding';
@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertCircle, ChevronLeft } from 'lucide-react';
 
-export default function SetupPage() {
+function SetupPageContent() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -242,3 +242,12 @@ export default function SetupPage() {
     />
   );
 } 
+
+
+export default function SetupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SetupPageContent />
+    </Suspense>
+  );
+}

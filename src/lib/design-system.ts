@@ -548,7 +548,7 @@ export interface ThemeContextType {
 }
 
 // CSS variables for theme switching (adapted for Tailwind CSS v4)
-export const generateThemeCSS = (theme: Theme) => {
+export const generateThemeCSS = (theme: Theme): string => {
   const themeColors = designSystem.themes[theme];
   
   // Fallback if theme doesn't exist

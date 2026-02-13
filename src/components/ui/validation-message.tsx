@@ -1,8 +1,8 @@
 import React from 'react';
-import { UseUniqueValidationResult } from '@/hooks/useUniqueValidation';
+import { UniqueValidationState } from '@/hooks/useUniqueValidation';
 
 interface ValidationMessageProps {
-  validation: UseUniqueValidationResult;
+  validation: UniqueValidationState;
 }
 
 export function ValidationMessage({ validation }: ValidationMessageProps) {

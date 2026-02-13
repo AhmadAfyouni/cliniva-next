@@ -221,7 +221,7 @@ export interface OrganizationDto {
   phone?: string;
   email?: string;
   address?: string;
-  googleLocation?: string;
+  googleLocation?: string; // Should be string, not object
   logoUrl?: string;
   website?: string;
   businessProfile?: BusinessProfileDto;
@@ -373,7 +373,8 @@ export interface StepValidationResultDto {
 
 export interface OnboardingProgressDto {
   userId: string;
-  currentStep?: string;
+  currentStep?: string | number;
+  currentSubStep?: string;
   completedSteps: string[];
   planType: 'company' | 'complex' | 'clinic';
   subscriptionId?: string;

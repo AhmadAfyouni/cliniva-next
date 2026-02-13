@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Check, ArrowRight, Loader2, AlertTriangle } from "lucide-react";
@@ -63,7 +64,7 @@ const fallbackPlans: SubscriptionPlan[] = [
   }
 ];
 
-export default function PlanSelectionPage() {
+function PlanSelectionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
@@ -391,5 +392,13 @@ export default function PlanSelectionPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PlanSelectionPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <PlanSelectionPageContent />
+    </Suspense>
   );
 } 

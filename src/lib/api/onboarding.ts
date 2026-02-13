@@ -4,17 +4,28 @@ import {
   CompanyFormData, 
   ComplexFormData, 
   ClinicFormData,
-  OnboardingSubmissionData,
-  ApiResponse,
-  WorkingDay,
-  Service,
-  Department,
-  ContactInfo,
-  LegalInfo
+  OrganizationDto,
+  ComplexDto,
+  ClinicDto,
+  DepartmentDto,
+  ServiceDto,
+  UserDataDto,
+  SubscriptionDataDto,
+  ContactDto,
+  WorkingHoursDto,
+  LegalInfoDto
 } from '@/types/onboarding';
 
 // API Base Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
+// Generic API Response type
+interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  errors?: any[];
+}
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -42,129 +53,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Backend DTO interfaces (matching the NestJS DTOs)
-interface UserDataDto {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  phone?: string;
-}
-
-interface SubscriptionDataDto {
-  planType: PlanType;
-  planId: string;
-}
-
-interface OrganizationDto {
-  name: string;
-  legalName: string;
-  phone: string;
-  email: string;
-  address: string;
-  googleLocation: {
-    lat: number;
-    lng: number;
-    shareableLink?: string;
-  };
-  logoUrl?: string;
-  website?: string;
-  businessProfile: {
-    yearEstablished: number;
-    mission: string;
-    vision: string;
-    ceoName: string;
-    employeeCount?: number;
-    yearlyRevenue?: number;
-    industry?: string;
-  };
-  legalInfo: LegalInfo;
-}
-
-interface ComplexDto {
-  name: string;
-  address: string;
-  googleLocation: {
-    lat: number;
-    lng: number;
-    shareableLink?: string;
-  };
-  phone: string;
-  email: string;
-  logoUrl?: string;
-  managerName: string;
-  businessProfile: {
-    yearEstablished: number;
-    mission?: string;
-    totalArea?: number;
-    parkingSpaces?: number;
-    emergencyServices?: boolean;
-    laboratoryServices?: boolean;
-    pharmacyServices?: boolean;
-  };
-  legalInfo?: LegalInfo;
-}
-
-interface ClinicDto {
-  name: string;
-  phone: string;
-  email: string;
-  logoUrl?: string;
-  headDoctorName: string;
-  specialization: string;
-  capacity: {
-    maxStaff: number;
-    maxDoctors: number;
-    maxPatients: number;
-    sessionDuration: number;
-    roomCount?: number;
-  };
-  businessProfile: {
-    yearEstablished: number;
-    accreditations?: string[];
-    insuranceAccepted?: string[];
-    languagesSpoken?: string[];
-  };
-  legalInfo?: LegalInfo;
-}
-
-interface DepartmentDto {
-  name: string;
-  description?: string;
-  head?: string;
-  staffCount?: number;
-  budget?: number;
-}
-
-interface ServiceDto {
-  name: string;
-  description?: string;
-  durationMinutes?: number;
-  price?: number;
-  category?: string;
-  prerequisites?: string[];
-  followUpRequired?: boolean;
-  equipment?: string[];
-  staffRequired?: string[];
-}
-
-interface WorkingHoursDto {
-  entityType: 'organization' | 'complex' | 'clinic';
-  entityName: string;
-  dayOfWeek: string;
-  isWorkingDay: boolean;
-  openingTime?: string;
-  closingTime?: string;
-  breakStartTime?: string;
-  breakEndTime?: string;
-}
-
-interface ContactDto {
-  contactType: string;
-  contactValue: string;
-  entityType?: 'organization' | 'complex' | 'clinic';
-  entityName?: string;
-}
+// All DTO interfaces are imported from @/types/onboarding
 
 export interface CompleteOnboardingPayload {
   userData: UserDataDto;
@@ -176,7 +65,7 @@ export interface CompleteOnboardingPayload {
   services?: ServiceDto[];
   workingHours?: WorkingHoursDto[];
   contacts?: ContactDto[];
-  legalInfo?: LegalInfo;
+  legalInfo?: LegalInfoDto;
 }
 
 export interface OnboardingResult {
@@ -307,61 +196,76 @@ export class OnboardingApiClient {
 
     // Transform company data
     if (planType === 'company' && companyData?.overview && companyData?.contact && companyData?.legal) {
+      const address = companyData.contact.address ? 
+        [
+          companyData.contact.address.street,
+          companyData.contact.address.city,
+          companyData.contact.address.state,
+          companyData.contact.address.postalCode,
+          companyData.contact.address.country
+        ].filter(Boolean).join(', ') : '';
+
       payload.organization = {
-        name: companyData.overview.tradeName,
+        name: companyData.overview.name,
         legalName: companyData.overview.legalName,
-        phone: companyData.contact.phoneNumbers?.[0] || '',
+        phone: companyData.contact.phoneNumbers?.[0]?.number,
         email: companyData.contact.email,
-        address: companyData.contact.address || '',
-        googleLocation: companyData.contact.googleLocation || { lat: 0, lng: 0 },
-        logoUrl: typeof companyData.overview.logo === 'string' ? companyData.overview.logo : undefined,
-        website: companyData.contact.website,
+        address,
+        googleLocation: companyData.contact.address?.googleLocation,
+        logoUrl: companyData.overview.logoUrl,
+        website: companyData.overview.website,
         businessProfile: {
           yearEstablished: companyData.overview.yearEstablished,
-          mission: companyData.overview.overview,
+          mission: companyData.overview.mission,
           vision: companyData.overview.vision,
-          ceoName: companyData.overview.ceoName,
-          employeeCount: companyData.overview.employeeCount,
-          yearlyRevenue: companyData.overview.yearlyRevenue,
-          industry: companyData.overview.industry
+          ceoName: companyData.overview.ceoName
         },
         legalInfo: companyData.legal
       };
 
       // Add social media contacts
       payload.contacts = [];
-      if (companyData.contact.facebook) {
-        payload.contacts.push({ contactType: 'facebook', contactValue: companyData.contact.facebook });
+      const socialMedia = companyData.contact.socialMediaLinks;
+      if (socialMedia?.facebook) {
+        payload.contacts.push({ contactType: 'facebook', contactValue: socialMedia.facebook });
       }
-      if (companyData.contact.twitter) {
-        payload.contacts.push({ contactType: 'twitter', contactValue: companyData.contact.twitter });
+      if (socialMedia?.twitter) {
+        payload.contacts.push({ contactType: 'twitter', contactValue: socialMedia.twitter });
       }
-      if (companyData.contact.instagram) {
-        payload.contacts.push({ contactType: 'instagram', contactValue: companyData.contact.instagram });
+      if (socialMedia?.instagram) {
+        payload.contacts.push({ contactType: 'instagram', contactValue: socialMedia.instagram });
       }
-      if (companyData.contact.linkedin) {
-        payload.contacts.push({ contactType: 'linkedin', contactValue: companyData.contact.linkedin });
+      if (socialMedia?.linkedin) {
+        payload.contacts.push({ contactType: 'linkedin', contactValue: socialMedia.linkedin });
       }
     }
 
     // Transform complex data
     if ((planType === 'complex' || planType === 'company') && complexData?.overview && complexData?.contact) {
+      const address = complexData.contact.address ? 
+        [
+          complexData.contact.address.street,
+          complexData.contact.address.city,
+          complexData.contact.address.state,
+          complexData.contact.address.postalCode,
+          complexData.contact.address.country
+        ].filter(Boolean).join(', ') : '';
+
       const complexDto: ComplexDto = {
         name: complexData.overview.name,
-        address: complexData.contact.address || '',
-        googleLocation: complexData.contact.googleLocation || { lat: 0, lng: 0 },
-        phone: complexData.contact.phoneNumbers?.[0] || '',
+        address,
+        googleLocation: complexData.contact.address?.googleLocation,
+        phone: complexData.contact.phoneNumbers?.[0]?.number,
         email: complexData.contact.email,
-        logoUrl: typeof complexData.overview.logo === 'string' ? complexData.overview.logo : undefined,
+        logoUrl: complexData.overview.logoUrl,
+        website: complexData.overview.website,
         managerName: complexData.overview.managerName,
+        departmentIds: complexData.overview.departmentIds,
         businessProfile: {
           yearEstablished: complexData.overview.yearEstablished,
-          mission: complexData.overview.description,
-          totalArea: complexData.overview.totalArea,
-          parkingSpaces: complexData.overview.parkingSpaces,
-          emergencyServices: complexData.overview.emergencyServices,
-          laboratoryServices: complexData.overview.laboratoryServices,
-          pharmacyServices: complexData.overview.pharmacyServices
+          mission: complexData.overview.mission,
+          vision: complexData.overview.vision,
+          ceoName: complexData.overview.ceoName
         },
         legalInfo: complexData.legal
       };
@@ -394,25 +298,33 @@ export class OnboardingApiClient {
 
     // Transform clinic data
     if (clinicData?.overview && clinicData?.contact) {
+      const address = clinicData.contact.address ? 
+        [
+          clinicData.contact.address.street,
+          clinicData.contact.address.city,
+          clinicData.contact.address.state,
+          clinicData.contact.address.postalCode,
+          clinicData.contact.address.country
+        ].filter(Boolean).join(', ') : '';
+
       const clinicDto: ClinicDto = {
         name: clinicData.overview.name,
-        phone: clinicData.contact.phoneNumbers?.[0] || '',
+        address,
+        googleLocation: clinicData.contact.address?.googleLocation,
+        phone: clinicData.contact.phoneNumbers?.[0]?.number,
         email: clinicData.contact.email,
-        logoUrl: typeof clinicData.overview.logo === 'string' ? clinicData.overview.logo : undefined,
+        logoUrl: clinicData.overview.logoUrl,
+        website: clinicData.overview.website,
         headDoctorName: clinicData.overview.headDoctorName,
         specialization: clinicData.overview.specialization,
-        capacity: {
-          maxStaff: clinicData.overview.maxStaff,
-          maxDoctors: clinicData.overview.maxDoctors,
-          maxPatients: clinicData.overview.maxPatients,
-          sessionDuration: clinicData.overview.sessionDuration,
-          roomCount: clinicData.overview.roomCount
-        },
+        pin: clinicData.overview.pin,
+        complexDepartmentId: clinicData.overview.complexDepartmentId,
+        capacity: clinicData.servicesCapacity?.capacity,
         businessProfile: {
           yearEstablished: clinicData.overview.yearEstablished,
-          accreditations: clinicData.overview.accreditations,
-          insuranceAccepted: clinicData.overview.insuranceAccepted,
-          languagesSpoken: clinicData.overview.languagesSpoken
+          mission: clinicData.overview.mission,
+          vision: clinicData.overview.vision,
+          ceoName: clinicData.overview.ceoName
         },
         legalInfo: planType === 'clinic' ? clinicData.legal : undefined
       };
@@ -421,9 +333,9 @@ export class OnboardingApiClient {
       payload.clinics.push(clinicDto);
 
       // Add services
-      if (clinicData.overview.services) {
+      if (clinicData.servicesCapacity?.services) {
         if (!payload.services) payload.services = [];
-        payload.services.push(...clinicData.overview.services.map(service => ({
+        payload.services.push(...clinicData.servicesCapacity.services.map(service => ({
           name: service.name,
           description: service.description,
           durationMinutes: service.durationMinutes,

@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useParams } from 'next/navigation';
@@ -62,7 +63,7 @@ interface SubscriptionPlan {
 
 // Remove these functions as we'll use the useRegister hook
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -527,5 +528,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <RegisterPageContent />
+    </Suspense>
   );
 } 

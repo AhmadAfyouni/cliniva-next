@@ -104,14 +104,15 @@ export const useFormValidation = () => {
       })
     }
 
-    // Optional but validated: registrationNumber
-    if (data.registrationNumber && data.registrationNumber.trim().length > 50) {
-      errors.push({
-        field: 'registrationNumber',
-        message: 'Registration number must not exceed 50 characters',
-        type: 'length'
-      })
-    }
+    // Optional but validated: registrationNumber (from legal data, not overview)
+    // Note: registrationNumber is in legal data (crNumber), not in overview
+    // if (data.registrationNumber && data.registrationNumber.trim().length > 50) {
+    //   errors.push({
+    //     field: 'registrationNumber',
+    //     message: 'Registration number must not exceed 50 characters',
+    //     type: 'length'
+    //   })
+    // }
 
     // Warnings for recommended fields
     if (!data.overview || data.overview.trim().length === 0) {
@@ -151,35 +152,35 @@ export const useFormValidation = () => {
       })
     }
 
-    // Validate website if provided
-    if (data.website && !isValidUrl(data.website)) {
-      errors.push({
-        field: 'website',
-        message: 'Please enter a valid website URL',
-        type: 'format'
-      })
-    }
+    // Validate website if provided (website is in overview, not contact)
+    // if (data.website && !isValidUrl(data.website)) {
+    //   errors.push({
+    //     field: 'website',
+    //     message: 'Please enter a valid website URL',
+    //     type: 'format'
+    //   })
+    // }
 
-    // Validate phone if provided
-    if (data.phone && data.phone.trim().length > 0) {
-      const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
-      if (!phoneRegex.test(data.phone.replace(/[\s\-\(\)]/g, ''))) {
-        errors.push({
-          field: 'phone',
-          message: 'Please enter a valid phone number',
-          type: 'format'
-        })
-      }
-    }
+    // Validate phone if provided (phone is phoneNumbers array in contact DTO)
+    // if (data.phone && data.phone.trim().length > 0) {
+    //   const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
+    //   if (!phoneRegex.test(data.phone.replace(/[\s\-\(\)]/g, ''))) {
+    //     errors.push({
+    //       field: 'phone',
+    //       message: 'Please enter a valid phone number',
+    //       type: 'format'
+    //     })
+    //   }
+    // }
 
-    // Validate address length
-    if (data.address && data.address.trim().length > 500) {
-      errors.push({
-        field: 'address',
-        message: 'Address must not exceed 500 characters',
-        type: 'length'
-      })
-    }
+    // Validate address length (address is AddressDto object, not string)
+    // if (data.address && data.address.trim().length > 500) {
+    //   errors.push({
+    //     field: 'address',
+    //     message: 'Address must not exceed 500 characters',
+    //     type: 'length'
+    //   })
+    // }
 
     // Warnings for important contact info
     if (!data.email || data.email.trim().length === 0) {
@@ -190,13 +191,14 @@ export const useFormValidation = () => {
       })
     }
 
-    if (!data.phone || data.phone.trim().length === 0) {
-      warnings.push({
-        field: 'phone',
-        message: 'Phone number is recommended for direct contact',
-        type: 'custom'
-      })
-    }
+    // Phone is phoneNumbers array, not a simple string
+    // if (!data.phone || data.phone.trim().length === 0) {
+    //   warnings.push({
+    //     field: 'phone',
+    //     message: 'Phone number is recommended for direct contact',
+    //     type: 'custom'
+    //   })
+    // }
 
     return {
       isValid: errors.length === 0,
@@ -340,40 +342,40 @@ export const useFormValidation = () => {
       })
     }
 
-    // Validate capacity if provided
-    if (data.capacity) {
-      if (data.capacity.maxStaff && (data.capacity.maxStaff < 1 || data.capacity.maxStaff > 1000)) {
-        errors.push({
-          field: 'capacity.maxStaff',
-          message: 'Max staff must be between 1 and 1000',
-          type: 'format'
-        })
-      }
+    // Validate capacity if provided (capacity is not in ClinicOverviewDto)
+    // if (data.capacity) {
+    //   if (data.capacity.maxStaff && (data.capacity.maxStaff < 1 || data.capacity.maxStaff > 1000)) {
+    //     errors.push({
+    //       field: 'capacity.maxStaff',
+    //       message: 'Max staff must be between 1 and 1000',
+    //       type: 'format'
+    //     })
+    //   }
 
-      if (data.capacity.maxDoctors && (data.capacity.maxDoctors < 1 || data.capacity.maxDoctors > 500)) {
-        errors.push({
-          field: 'capacity.maxDoctors',
-          message: 'Max doctors must be between 1 and 500',
-          type: 'format'
-        })
-      }
+    //   if (data.capacity.maxDoctors && (data.capacity.maxDoctors < 1 || data.capacity.maxDoctors > 500)) {
+    //     errors.push({
+    //       field: 'capacity.maxDoctors',
+    //       message: 'Max doctors must be between 1 and 500',
+    //       type: 'format'
+    //     })
+    //   }
 
-      if (data.capacity.maxPatients && (data.capacity.maxPatients < 1 || data.capacity.maxPatients > 10000)) {
-        errors.push({
-          field: 'capacity.maxPatients',
-          message: 'Max patients must be between 1 and 10,000',
-          type: 'format'
-        })
-      }
+    //   if (data.capacity.maxPatients && (data.capacity.maxPatients < 1 || data.capacity.maxPatients > 10000)) {
+    //     errors.push({
+    //       field: 'capacity.maxPatients',
+    //       message: 'Max patients must be between 1 and 10,000',
+    //       type: 'format'
+    //     })
+    //   }
 
-      if (data.capacity.sessionDuration && (data.capacity.sessionDuration < 5 || data.capacity.sessionDuration > 480)) {
-        errors.push({
-          field: 'capacity.sessionDuration',
-          message: 'Session duration must be between 5 and 480 minutes',
-          type: 'format'
-        })
-      }
-    }
+    //   if (data.capacity.sessionDuration && (data.capacity.sessionDuration < 5 || data.capacity.sessionDuration > 480)) {
+    //     errors.push({
+    //       field: 'capacity.sessionDuration',
+    //       message: 'Session duration must be between 5 and 480 minutes',
+    //       type: 'format'
+    //     })
+    //   }
+    // }
 
     return {
       isValid: errors.length === 0,

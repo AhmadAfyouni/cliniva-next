@@ -46,7 +46,7 @@ export const useValidateStep = (options: UseValidateStepOptions = {}) => {
       } else {
         // Set validation errors in store
         const errorMap: Record<string, string[]> = {};
-        data.errors.forEach(error => {
+        data.errors.forEach((error: string) => {
           if (!errorMap[error]) errorMap[error] = [];
           errorMap[error].push(error);
         });

@@ -4,12 +4,12 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { 
   PlanType, 
-  OnboardingProgress, 
+  OnboardingProgressDto, 
   CompanyFormData, 
   ComplexFormData, 
-  ClinicFormData,
-  WorkingDay 
+  ClinicFormData
 } from '@/types/onboarding';
+import { WorkingDay } from '@/types/onboarding/common';
 
 // Step configurations for each plan type
 const PLAN_STEP_CONFIGS = {
@@ -47,10 +47,18 @@ const DEFAULT_WORKING_HOURS: WorkingDay[] = [
   { dayOfWeek: 'sunday', isWorkingDay: false, openingTime: '', closingTime: '', breakStartTime: '', breakEndTime: '' }
 ];
 
+// Local progress state (different from API DTO)
+interface ProgressState {
+  currentStep: number;
+  currentSubStep: string;
+  completedSteps: string[];
+  planType: PlanType;
+}
+
 interface OnboardingState {
   // Plan and progress
   planType: PlanType | null;
-  progress: OnboardingProgress;
+  progress: ProgressState;
   
   // Form data for each plan type
   companyData: Partial<CompanyFormData>;
@@ -63,7 +71,7 @@ interface OnboardingState {
   
   // Actions
   setPlanType: (planType: PlanType) => void;
-  updateProgress: (progress: Partial<OnboardingProgress>) => void;
+  updateProgress: (progress: Partial<ProgressState>) => void;
   updateCompanyData: (data: Partial<CompanyFormData>) => void;
   updateComplexData: (data: Partial<ComplexFormData>) => void;
   updateClinicData: (data: Partial<ClinicFormData>) => void;

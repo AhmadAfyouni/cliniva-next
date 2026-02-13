@@ -22,16 +22,27 @@ export const useOnboardingSubmission = (options: UseOnboardingSubmissionOptions 
   const transformCompanyDataToOrganization = () => {
     if (!companyData.overview) return undefined;
 
+    // Convert address object to string
+    const addressString = companyData.contact?.address 
+      ? [
+          companyData.contact.address.street,
+          companyData.contact.address.city,
+          companyData.contact.address.state,
+          companyData.contact.address.postalCode,
+          companyData.contact.address.country
+        ].filter(Boolean).join(', ')
+      : undefined;
+
     return {
       name: companyData.overview.name,
       legalName: companyData.overview.legalName,
-      registrationNumber: companyData.overview.registrationNumber,
-      phone: companyData.contact?.phone,
+      registrationNumber: companyData.legal?.crNumber,
+      phone: companyData.contact?.phoneNumbers?.[0]?.number,
       email: companyData.contact?.email,
-      address: companyData.contact?.address,
-      googleLocation: companyData.contact?.googleLocation,
+      address: addressString,
+      googleLocation: companyData.contact?.address?.googleLocation,
       logoUrl: companyData.overview.logoUrl,
-      website: companyData.contact?.website,
+      website: companyData.overview.website,
       businessProfile: {
         yearEstablished: companyData.overview.yearEstablished,
         mission: companyData.overview.mission,

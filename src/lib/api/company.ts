@@ -84,20 +84,27 @@ export async function completeCompanyRegistration(
       // Overview data
       name: formData.overview?.name || '',
       legalName: formData.overview?.legalName,
-      registrationNumber: formData.overview?.registrationNumber,
+      registrationNumber: formData.legal?.crNumber, // From legal data, not overview
       yearEstablished: formData.overview?.yearEstablished,
       logoUrl: formData.overview?.logoUrl,
       ceoName: formData.overview?.ceoName,
       mission: formData.overview?.mission,
       vision: formData.overview?.vision,
-      // Contact data
-      phone: formData.contact?.phone,
+      // Contact data (convert from DTO structure)
+      phone: formData.contact?.phoneNumbers?.[0]?.number,
       email: formData.contact?.email,
-      website: formData.contact?.website,
-      address: formData.contact?.address,
-      googleLocation: formData.contact?.googleLocation,
-      emergencyContactName: formData.contact?.emergencyContactName,
-      emergencyContactPhone: formData.contact?.emergencyContactPhone,
+      website: formData.overview?.website, // Website is in overview, not contact
+      address: formData.contact?.address ? 
+        [
+          formData.contact.address.street,
+          formData.contact.address.city,
+          formData.contact.address.state,
+          formData.contact.address.postalCode,
+          formData.contact.address.country
+        ].filter(Boolean).join(', ') : undefined,
+      googleLocation: formData.contact?.address?.googleLocation,
+      emergencyContactName: formData.contact?.emergencyContact?.name,
+      emergencyContactPhone: formData.contact?.emergencyContact?.phone,
       socialMediaLinks: formData.contact?.socialMediaLinks,
       // Legal data
       vatNumber: formData.legal?.vatNumber,
@@ -152,11 +159,12 @@ export function validateCompanyRegistrationData(formData: CompanyFormData): {
     }
   }
 
-  if (formData.contact?.website && formData.contact.website.trim() !== '') {
+  // Website is in overview, not contact
+  if (formData.overview?.website && formData.overview.website.trim() !== '') {
     try {
-      new URL(formData.contact.website.startsWith('http') ? 
-        formData.contact.website : 
-        `https://${formData.contact.website}`);
+      new URL(formData.overview.website.startsWith('http') ? 
+        formData.overview.website : 
+        `https://${formData.overview.website}`);
     } catch {
       errors.push('Please provide a valid website URL');
     }

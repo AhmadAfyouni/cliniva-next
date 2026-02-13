@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import { NavigationSidebar } from '@/components/onboarding/NavigationSidebar';
@@ -41,7 +41,7 @@ interface FormData {
   [key: string]: any;
 }
 
-export default function SetupPage() {
+function SetupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = useParams();
@@ -922,5 +922,14 @@ export default function SetupPage() {
         {renderCurrentForm()}
       </div>
     </div>
+  );
+}
+
+
+export default function SetupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SetupPageContent />
+    </Suspense>
   );
 }
