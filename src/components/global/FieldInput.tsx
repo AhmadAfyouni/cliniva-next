@@ -15,7 +15,7 @@ import { ValidationMessage } from "../ui/validation-message";
 import { UniqueValidationState } from "@/hooks/useUniqueValidation";
 
 type Layout = "stacked" | "inline";
-type Variant = "glow" | "flat";
+type Variant = "glow" | "flat" | "pill";
 
 type Props<TFieldValues extends FieldValues> = {
   name: FieldPath<TFieldValues>;
@@ -24,6 +24,7 @@ type Props<TFieldValues extends FieldValues> = {
   type?: React.InputHTMLAttributes<HTMLInputElement>["type"];
   control: Control<TFieldValues>;
   description?: string;
+  hideLabel?: boolean; // if true, the label will be visually hidden but still accessible to screen readers
   icon?: React.ReactNode;
   isDecimal?: boolean; // for number inputs, allow decimals instead of just integers
   required?: boolean;
@@ -53,6 +54,7 @@ export default function FieldInput<TFieldValues extends FieldValues>({
   type = "text",
   control,
   description,
+  hideLabel = false,
   icon,
   isDecimal = false,
   required = false,
@@ -76,8 +78,9 @@ export default function FieldInput<TFieldValues extends FieldValues>({
   const isRTL = locale === "ar";
 
   const baseInputClasses = [
+    variant === "pill" ? "!bg-white rounded-full" : "bg-background",
     "h-[48px] text-base font-lato",
-    "bg-background text-foreground border-border",
+    "text-foreground border-border",
     "focus-visible:ring-ring focus-visible:border-ring",
     "placeholder:text-muted-foreground",
     isRTL ? "text-right" : "text-left",
@@ -86,8 +89,10 @@ export default function FieldInput<TFieldValues extends FieldValues>({
   // ✅ style variants
   const inputVariantClasses =
     variant === "glow"
-      ? "shadow-sm"
-      : "shadow-none border border-border rounded-md"; // “flat” look
+      ? "shadow-sm border border-border"
+      : variant === "flat"
+        ? "shadow-none border border-border rounded-md"
+        : "shadow-none border border-border rounded-full bg-white"; // pill
 
   const inputPaddingClasses = [
     icon ? "pl-12" : "pl-4",
@@ -101,10 +106,15 @@ export default function FieldInput<TFieldValues extends FieldValues>({
           boxShadow: "0px 0px 1px 1px rgba(21, 197, 206, 0.16)",
           borderRadius: "8px",
         }
-      : {
-          boxShadow: "none",
-          borderRadius: "6px",
-        };
+      : variant === "flat"
+        ? {
+            boxShadow: "none",
+            borderRadius: "6px",
+          }
+        : {
+            boxShadow: "none",
+            borderRadius: "9999px",
+          };
 
   // ✅ layout wrapper
   const itemLayoutClass =
@@ -120,18 +130,20 @@ export default function FieldInput<TFieldValues extends FieldValues>({
       name={name}
       render={({ field }) => (
         <FormItem className={[itemLayoutClass, wrapperClassName].join(" ")}>
-          <FormLabel
-            htmlFor={field.name}
-            className={[
-              "text-sm font-lato text-primary font-normal leading-relaxed",
-              isRTL ? "text-right" : "text-left",
-              labelLayoutClass,
-              labelClassName,
-            ].join(" ")}
-          >
-            {label}
-            {required && <span className="text-red-500">*</span>}
-          </FormLabel>
+          {!hideLabel && (
+            <FormLabel
+              htmlFor={field.name}
+              className={[
+                "text-sm font-lato text-primary font-normal leading-relaxed",
+                isRTL ? "text-right" : "text-left",
+                labelLayoutClass,
+                labelClassName,
+              ].join(" ")}
+            >
+              {label}
+              {required && <span className="text-red-500">*</span>}
+            </FormLabel>
+          )}
 
           <div className={layout === "inline" ? "flex-1" : ""}>
             <FormControl>
